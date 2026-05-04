@@ -17,12 +17,13 @@ import { getFirestore } from 'firebase/firestore'
 
 // ⬇️ Replace with your Firebase project config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDOGVQ347cfQlEsHYSqEvSaVS1_B5hi8JY",
+  authDomain: "caltrack-personal.firebaseapp.com",
+  projectId: "caltrack-personal",
+  storageBucket: "caltrack-personal.firebasestorage.app",
+  messagingSenderId: "246357751292",
+  appId: "1:246357751292:web:268e7a8c7920d5e974ae79",
+  measurementId: "G-J631430T4Y"
 }
 
 const app = initializeApp(firebaseConfig)
