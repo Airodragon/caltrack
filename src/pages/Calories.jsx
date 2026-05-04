@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import QuickAddModal from '../components/QuickAddModal'
-import { MEAL_TYPES, todayKey } from '../utils/helpers'
+import { MEAL_TYPES } from '../utils/helpers'
+import SkeletonBlock from '../components/SkeletonBlock'
 
 const MEAL_EMOJI = { Breakfast: '🌅', Lunch: '☀️', Dinner: '🌙', Snack: '🍎' }
 
@@ -9,6 +10,12 @@ export default function Calories() {
   const { profile, todayMeals, todayCalories, todayProtein, todayCarbs, todayFat, deleteMeal, showToast } = useApp()
   const [showAdd, setShowAdd] = useState(false)
   const [filter, setFilter] = useState('All')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 350)
+    return () => clearTimeout(t)
+  }, [])
 
   const goal = profile?.calorieGoal || 2000
   const remaining = goal - todayCalories
@@ -35,6 +42,14 @@ export default function Calories() {
       {/* Main summary */}
       <div className="section">
         <div className="card glow-card">
+          {loading ? (
+            <div style={{ display: 'grid', gap: 10 }}>
+              <SkeletonBlock height={46} />
+              <SkeletonBlock height={12} />
+              <SkeletonBlock height={92} />
+            </div>
+          ) : (
+            <>
           {/* Big number */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
             <div>
@@ -87,6 +102,8 @@ export default function Calories() {
               )
             })}
           </div>
+            </>
+          )}
         </div>
       </div>
 

@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { todayKey, genId } from '../utils/helpers'
+import { todayKey, toLocalDateKey } from '../utils/helpers'
+import SkeletonBlock from '../components/SkeletonBlock'
 
 const DAYS_BACK = 7
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -14,7 +15,7 @@ function buildWeekDays() {
     const d = new Date()
     d.setDate(d.getDate() - i)
     days.push({
-      date: d.toISOString().slice(0, 10),
+      date: toLocalDateKey(d),
       dayNum: d.getDate(),
       dayName: SHORT_DAYS[d.getDay()],
     })
@@ -30,6 +31,12 @@ export default function Routine() {
   const [icon, setIcon] = useState('🎯')
   const [color, setColor] = useState('#30D158')
   const [confirmDel, setConfirmDel] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 350)
+    return () => clearTimeout(t)
+  }, [])
 
   const weekDays = buildWeekDays()
   const doneDates = habitLogs[selectedDate] || []
@@ -46,7 +53,7 @@ export default function Routine() {
     let s = 0
     const d = new Date()
     while (true) {
-      const k = d.toISOString().slice(0, 10)
+      const k = toLocalDateKey(d)
       if (!(habitLogs[k] || []).includes(habitId)) break
       s++; d.setDate(d.getDate() - 1)
     }
@@ -89,6 +96,8 @@ export default function Routine() {
       {totalHabits > 0 && (
         <div className="section" style={{ marginBottom: 16 }}>
           <div className="card glow-card" style={{ padding: '16px 20px' }}>
+            {loading ? <SkeletonBlock height={78} /> : (
+              <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div>
                 <p style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 500 }}>
@@ -115,6 +124,8 @@ export default function Routine() {
                   : 'var(--green)',
               }} />
             </div>
+              </>
+            )}
           </div>
         </div>
       )}

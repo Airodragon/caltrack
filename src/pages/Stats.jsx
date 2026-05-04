@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { getLastNDays, getDayLabel } from '../utils/helpers'
+import { getLastNDays, getDayLabel, toLocalDateKey } from '../utils/helpers'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie,
@@ -8,12 +8,19 @@ import {
   AreaChart, Area,
   CartesianGrid, ReferenceLine,
 } from 'recharts'
+import SkeletonBlock from '../components/SkeletonBlock'
 
 const RANGES = [7, 14, 30]
 
 export default function Stats() {
   const { meals, habits, habitLogs, profile } = useApp()
   const [range, setRange] = useState(7)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 350)
+    return () => clearTimeout(t)
+  }, [])
 
   const goal = profile?.calorieGoal || 2000
   const days = getLastNDays(range)
@@ -70,7 +77,7 @@ export default function Stats() {
     let streak = 0
     const d = new Date()
     while (true) {
-      const k = d.toISOString().slice(0, 10)
+      const k = toLocalDateKey(d)
       if (!(habitLogs[k] || []).includes(h.id)) break
       streak++; d.setDate(d.getDate() - 1)
     }
@@ -111,6 +118,13 @@ export default function Stats() {
 
       {/* Summary cards */}
       <div className="section">
+        {loading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <SkeletonBlock height={86} radius={16} />
+            <SkeletonBlock height={86} radius={16} />
+            <SkeletonBlock height={86} radius={16} />
+          </div>
+        ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           {[
             { label: 'Avg / day', value: avgCal ? avgCal.toLocaleString() : '—', sub: 'kcal', color: 'var(--green)' },
@@ -124,6 +138,7 @@ export default function Stats() {
             </div>
           ))}
         </div>
+        )}
       </div>
 
       {/* ── Calorie Bar Chart ── */}

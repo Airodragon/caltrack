@@ -39,10 +39,23 @@ export const MACRO_COLORS = {
 
 // ── Date Utilities ─────────────────────────────────────────────
 
-export const todayKey = () => new Date().toISOString().slice(0, 10)
+const pad = (value) => String(value).padStart(2, '0')
+
+export const toLocalDateKey = (dateInput = new Date()) => {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput)
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+export const parseDateKey = (dateStr) => {
+  if (!dateStr || typeof dateStr !== 'string') return new Date()
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(year, (month || 1) - 1, day || 1)
+}
+
+export const todayKey = () => toLocalDateKey()
 
 export const formatDate = (dateStr) => {
-  const d = new Date(dateStr + 'T00:00:00')
+  const d = parseDateKey(dateStr)
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
@@ -51,13 +64,13 @@ export const getLastNDays = (n) => {
   for (let i = n - 1; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    days.push(d.toISOString().slice(0, 10))
+    days.push(toLocalDateKey(d))
   }
   return days
 }
 
 export const getDayLabel = (dateStr) => {
-  const d = new Date(dateStr + 'T00:00:00')
+  const d = parseDateKey(dateStr)
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   return days[d.getDay()]
 }

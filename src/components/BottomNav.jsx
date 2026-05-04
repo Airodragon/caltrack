@@ -10,17 +10,16 @@ const TABS = [
 
 export default function BottomNav() {
   return (
-    <nav style={S.nav}>
-      <div style={S.blur} />
+    <nav className="nav-bar">
       <div style={S.inner}>
         {TABS.map(({ to, end, label, icon: Icon }) => (
           <NavLink key={to} to={to} end={end} style={{ textDecoration: 'none', flex: 1 }}>
             {({ isActive }) => (
               <div style={S.tab}>
-                <div style={{ ...S.iconWrap, color: isActive ? 'var(--green)' : 'var(--text-3)' }}>
+                <div style={{ ...S.iconWrap, color: isActive ? 'var(--blue)' : 'var(--text-3)' }}>
                   <Icon active={isActive} />
                 </div>
-                <span style={{ ...S.label, color: isActive ? 'var(--green)' : 'var(--text-3)' }}>
+                <span style={{ ...S.label, color: isActive ? 'var(--blue)' : 'var(--text-3)' }}>
                   {label}
                 </span>
               </div>
@@ -70,27 +69,9 @@ function StatsIcon({ active }) {
 }
 
 const S = {
-  nav: {
-    position: 'fixed',
-    bottom: 0,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '100%',
-    maxWidth: 430,
-    zIndex: 100,
-  },
-  blur: {
-    position: 'absolute',
-    inset: 0,
-    background: 'rgba(0,0,0,0.8)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    borderTop: '1px solid rgba(255,255,255,0.06)',
-  },
   inner: {
-    position: 'relative',
     display: 'flex',
-    paddingBottom: 'env(safe-area-inset-bottom, 20px)',
+    paddingBottom: 'env(safe-area-inset-bottom, 10px)',
   },
   tab: {
     display: 'flex',

@@ -1,4 +1,4 @@
-import{r as e,g as a,i as r}from"./index.esm-DLHfX2j9.js";var i="firebase",p="12.12.1";/**
+import{r as a,g as e,i as r}from"./index.esm-DLHfX2j9.js";var s="firebase",i="12.12.1";/**
  * @license
  * Copyright 2020 Google LLC
  *
@@ -13,4 +13,4 @@ import{r as e,g as a,i as r}from"./index.esm-DLHfX2j9.js";var i="firebase",p="12
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */e(i,p,"app");const s={apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",projectId:"YOUR_PROJECT_ID",storageBucket:"YOUR_PROJECT.appspot.com",messagingSenderId:"YOUR_SENDER_ID",appId:"YOUR_APP_ID"},o=r(s),n=a(o);export{n as db};
+ */a(s,i,"app");const p={apiKey:"AIzaSyDOGVQ347cfQlEsHYSqEvSaVS1_B5hi8JY",authDomain:"caltrack-personal.firebaseapp.com",projectId:"caltrack-personal",storageBucket:"caltrack-personal.firebasestorage.app",messagingSenderId:"246357751292",appId:"1:246357751292:web:268e7a8c7920d5e974ae79",measurementId:"G-J631430T4Y"},o=r(p),n=e(o);export{n as db};

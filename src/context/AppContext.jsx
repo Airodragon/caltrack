@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react'
 import { storage, DEFAULT_HABITS, todayKey, genId } from '../utils/helpers'
 
+const mergeByLatest = (localValue, remoteValue, updatedAtLocal, updatedAtRemote) => {
+  if (!remoteValue) return localValue
+  if (!localValue) return remoteValue
+  if (!updatedAtLocal) return remoteValue
+  if (!updatedAtRemote) return localValue
+  return new Date(updatedAtRemote) >= new Date(updatedAtLocal) ? remoteValue : localValue
+}
+
 // ── Firestore sync (lazy import so app works without Firebase config) ──────
 let firestoreModule = null
 const getFirestore = async () => {
@@ -24,6 +32,7 @@ const getInitialState = () => ({
   toast: null,
   syncing: false,
   syncKey: storage.get('caltrack_sync_key', null),
+  lastUpdatedAt: storage.get('caltrack_last_updated_at', null),
 })
 
 // ── Reducer ───────────────────────────────────────────────────
@@ -33,6 +42,8 @@ function reducer(state, action) {
       return { ...state, profile: action.payload }
     case 'SET_SYNC_KEY':
       return { ...state, syncKey: action.payload }
+    case 'SET_LAST_UPDATED_AT':
+      return { ...state, lastUpdatedAt: action.payload }
     case 'HYDRATE':
       return { ...state, ...action.payload }
 
@@ -86,6 +97,7 @@ export function AppProvider({ children }) {
     storage.set('caltrack_habit_logs', state.habitLogs)
     storage.set('caltrack_meals', state.meals)
     storage.set('caltrack_sync_key', state.syncKey)
+    storage.set('caltrack_last_updated_at', state.lastUpdatedAt)
   }, [state.profile, state.habits, state.habitLogs, state.meals, state.syncKey])
 
   // ── Firestore real-time sync ──────────────────────────────
@@ -98,7 +110,7 @@ export function AppProvider({ children }) {
       const fs = await getFirestore()
       if (!fs || !active) return
 
-      const { db, doc, setDoc, onSnapshot } = fs
+      const { db, doc, onSnapshot } = fs
       const userDoc = doc(db, 'users', state.syncKey)
 
       // Subscribe to remote changes
@@ -109,10 +121,11 @@ export function AppProvider({ children }) {
         dispatch({
           type: 'HYDRATE',
           payload: {
-            profile: data.profile || state.profile,
-            habits: data.habits || state.habits,
-            habitLogs: data.habitLogs || state.habitLogs,
-            meals: data.meals || state.meals,
+            profile: mergeByLatest(state.profile, data.profile, state.lastUpdatedAt, data.updatedAt),
+            habits: mergeByLatest(state.habits, data.habits, state.lastUpdatedAt, data.updatedAt),
+            habitLogs: mergeByLatest(state.habitLogs, data.habitLogs, state.lastUpdatedAt, data.updatedAt),
+            meals: mergeByLatest(state.meals, data.meals, state.lastUpdatedAt, data.updatedAt),
+            lastUpdatedAt: data.updatedAt || state.lastUpdatedAt,
           }
         })
         setTimeout(() => { isSyncingFromCloud.current = false }, 100)
@@ -138,17 +151,23 @@ export function AppProvider({ children }) {
       const fs = await getFirestore()
       if (!fs) return
       const { db, doc, setDoc } = fs
+      const nowIso = new Date().toISOString()
+      dispatch({ type: 'SET_SYNCING', payload: true })
       try {
         await setDoc(doc(db, 'users', state.syncKey), {
           profile: state.profile,
           habits: state.habits,
           habitLogs: state.habitLogs,
           meals: state.meals,
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowIso,
         }, { merge: true })
+        dispatch({ type: 'SET_LAST_UPDATED_AT', payload: nowIso })
       } catch { /* offline */ }
+      finally {
+        dispatch({ type: 'SET_SYNCING', payload: false })
+      }
     }, 1500) // debounce 1.5s
-  }, [state.profile, state.habits, state.habitLogs, state.meals, state.syncKey])
+  }, [state.profile, state.habits, state.habitLogs, state.meals, state.syncKey, state.lastUpdatedAt])
 
   // ── Toast auto-dismiss ────────────────────────────────────
   useEffect(() => {

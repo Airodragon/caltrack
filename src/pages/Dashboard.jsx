@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { greetingByTime, todayKey } from '../utils/helpers'
+import { greetingByTime } from '../utils/helpers'
 import QuickAddModal from '../components/QuickAddModal'
+import SkeletonBlock from '../components/SkeletonBlock'
 
 export default function Dashboard() {
   const {
@@ -10,6 +11,12 @@ export default function Dashboard() {
   } = useApp()
 
   const [showAdd, setShowAdd] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 350)
+    return () => clearTimeout(t)
+  }, [])
 
   const goal = profile?.calorieGoal || 2000
   const remaining = goal - todayCalories
@@ -61,6 +68,12 @@ export default function Dashboard() {
       {/* ── Activity Ring Card ── */}
       <div className="section">
         <div className="card glow-card" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          {loading ? (
+            <div style={{ width: '100%' }}>
+              <SkeletonBlock height={170} radius={20} />
+            </div>
+          ) : (
+            <>
           {/* Ring */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <svg width={168} height={168} style={{ transform: 'rotate(-90deg)' }}>
@@ -119,6 +132,8 @@ export default function Dashboard() {
               <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>habits done today</p>
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -217,7 +232,7 @@ const S = {
   fab: {
     position: 'fixed',
     right: 20,
-    bottom: 'calc(var(--nav-height) + env(safe-area-inset-bottom, 20px) + 16px)',
+    bottom: 'calc(var(--nav-h) + env(safe-area-inset-bottom, 20px) + 14px)',
     width: 52, height: 52,
     borderRadius: 26,
     background: 'var(--green)',
@@ -225,7 +240,7 @@ const S = {
     fontSize: 24, fontWeight: 700,
     cursor: 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    boxShadow: '0 4px 20px rgba(48,209,88,0.35)',
+    boxShadow: '0 10px 22px rgba(10,132,255,0.22)',
     zIndex: 50,
     transition: 'transform 180ms',
   },
