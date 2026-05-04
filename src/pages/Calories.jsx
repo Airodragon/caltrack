@@ -3,8 +3,8 @@ import { useApp } from '../context/AppContext'
 import QuickAddModal from '../components/QuickAddModal'
 import { MEAL_TYPES } from '../utils/helpers'
 import SkeletonBlock from '../components/SkeletonBlock'
-
-const MEAL_EMOJI = { Breakfast: '🌅', Lunch: '☀️', Dinner: '🌙', Snack: '🍎' }
+import { Plus, Utensils, X } from 'lucide-react'
+import { MealTypeIcon } from '../components/AppIcon'
 
 export default function Calories() {
   const { profile, todayMeals, todayCalories, todayProtein, todayCarbs, todayFat, deleteMeal, showToast } = useApp()
@@ -111,7 +111,12 @@ export default function Calories() {
       <div className="chips" style={{ marginBottom: 16 }}>
         {['All', ...MEAL_TYPES].map(t => (
           <button key={t} className={`chip ${filter === t ? 'active' : ''}`} onClick={() => setFilter(t)}>
-            {t !== 'All' && MEAL_EMOJI[t] + ' '}{t}
+            {t !== 'All' && (
+              <span style={{ display: 'inline-flex', marginRight: 6, verticalAlign: 'middle' }}>
+                <MealTypeIcon type={t} size={14} />
+              </span>
+            )}
+            {t}
           </button>
         ))}
       </div>
@@ -120,7 +125,7 @@ export default function Calories() {
       <div className="section">
         {todayMeals.length === 0 ? (
           <div className="empty">
-            <div className="empty-icon">🍽️</div>
+            <div className="empty-icon"><Utensils size={24} /></div>
             <p>Nothing logged today.<br />Tap the button below to add a meal.</p>
           </div>
         ) : filter === 'All' ? (
@@ -131,7 +136,10 @@ export default function Calories() {
             return (
               <div key={type} style={{ marginBottom: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, padding: '0 4px' }}>
-                  <span className="section-title">{MEAL_EMOJI[type]} {type}</span>
+                  <span className="section-title" style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    <MealTypeIcon type={type} size={13} />
+                    {type}
+                  </span>
                   <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{typeTotal} kcal</span>
                 </div>
                 <div className="grouped-card">
@@ -151,7 +159,8 @@ export default function Calories() {
 
         <button className="btn btn-primary w-full" style={{ marginTop: 16, borderRadius: 'var(--r-xl)' }}
           onClick={() => setShowAdd(true)}>
-          + Log Meal
+          <Plus size={16} />
+          Log Meal
         </button>
       </div>
 
@@ -174,7 +183,7 @@ function MealRow({ meal, onDelete }) {
         </p>
       </div>
       <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', flexShrink: 0 }}>{meal.calories}</span>
-      <button className="btn-icon" onClick={onDelete}>×</button>
+      <button className="btn-icon" onClick={onDelete}><X size={14} /></button>
     </div>
   )
 }

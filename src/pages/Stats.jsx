@@ -4,11 +4,12 @@ import { getLastNDays, getDayLabel, toLocalDateKey } from '../utils/helpers'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie,
-  LineChart, Line,
   AreaChart, Area,
   CartesianGrid, ReferenceLine,
 } from 'recharts'
 import SkeletonBlock from '../components/SkeletonBlock'
+import { CalendarDays, CheckCircle2, Flame, PieChart as PieChartIcon, Salad, BarChart3 } from 'lucide-react'
+import { HabitIcon } from '../components/AppIcon'
 
 const RANGES = [7, 14, 30]
 
@@ -144,7 +145,7 @@ export default function Stats() {
       {/* ── Calorie Bar Chart ── */}
       <div className="section">
         <div style={S.chartHead}>
-          <span style={S.chartTitle}>🔥 Calories</span>
+          <span style={S.chartTitle}><Flame size={12} /> Calories</span>
           {overGoalDays > 0 && <span style={{ fontSize: 11, color: 'var(--red)' }}>{overGoalDays}d over goal</span>}
         </div>
         <div className="card">
@@ -180,7 +181,7 @@ export default function Stats() {
       {/* ── Macros Over Time (Stacked Area) ── */}
       <div className="section">
         <div style={S.chartHead}>
-          <span style={S.chartTitle}>🥗 Macros Trend</span>
+          <span style={S.chartTitle}><Salad size={12} /> Macros Trend</span>
         </div>
         <div className="card">
           {daysWithData.length === 0 ? (
@@ -218,7 +219,7 @@ export default function Stats() {
       {/* ── Today Macro Donut ── */}
       <div className="section">
         <div style={S.chartHead}>
-          <span style={S.chartTitle}>🍩 Today's Macro Split</span>
+          <span style={S.chartTitle}><PieChartIcon size={12} /> Today's Macro Split</span>
         </div>
         <div className="card">
           {macroTotal === 0 ? (
@@ -267,7 +268,7 @@ export default function Stats() {
       {/* ── Habit Completion Line Chart ── */}
       <div className="section">
         <div style={S.chartHead}>
-          <span style={S.chartTitle}>✅ Routine Completion</span>
+          <span style={S.chartTitle}><CheckCircle2 size={12} /> Routine Completion</span>
           {avgHabit > 0 && <span style={{ fontSize: 11, color: 'var(--purple)' }}>{avgHabit}% avg</span>}
         </div>
         <div className="card">
@@ -307,13 +308,13 @@ export default function Stats() {
       {habitStreaks.length > 0 && (
         <div className="section">
           <div style={S.chartHead}>
-            <span style={S.chartTitle}>🔥 Habit Streaks</span>
+            <span style={S.chartTitle}><BarChart3 size={12} /> Habit Streaks</span>
           </div>
           <div className="grouped-card">
             {habitStreaks.map((h, i) => (
               <div key={h.id} className="grouped-item">
                 <div className="grouped-item-icon" style={{ background: `${h.color}22`, fontSize: 18 }}>
-                  {h.icon}
+                  <HabitIcon name={h.icon} size={17} color={h.color} />
                 </div>
                 <div className="grouped-item-body">
                   <p className="grouped-item-title">{h.name}</p>
@@ -332,7 +333,7 @@ export default function Stats() {
       {habits.length > 0 && (
         <div className="section">
           <div style={S.chartHead}>
-            <span style={S.chartTitle}>📅 28-Day Heatmap</span>
+            <span style={S.chartTitle}><CalendarDays size={12} /> 28-Day Heatmap</span>
           </div>
           <div className="card" style={{ overflowX: 'auto' }}>
             <HabitHeatmap habits={habits} habitLogs={habitLogs} />
@@ -352,7 +353,7 @@ function HabitHeatmap({ habits, habitLogs }) {
       {habits.map(habit => (
         <div key={habit.id} style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 14 }}>{habit.icon}</span>
+            <span style={{ display: 'inline-flex' }}><HabitIcon name={habit.icon} size={14} color={habit.color} /></span>
             <p style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 500, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {habit.name}
             </p>
@@ -404,5 +405,8 @@ const S = {
     letterSpacing: '0.5px',
     textTransform: 'uppercase',
     color: 'var(--text-3)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
   },
 }

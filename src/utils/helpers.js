@@ -22,11 +22,11 @@ export const storage = {
 // ── Default Data ───────────────────────────────────────────────
 
 export const DEFAULT_HABITS = [
-  { id: 'h1', name: '💧 Drink 8 glasses of water', icon: '💧', color: '#60A5FA' },
-  { id: 'h2', name: '🚶 Morning walk', icon: '🚶', color: '#7CFC8C' },
-  { id: 'h3', name: '😴 Sleep 8 hours', icon: '😴', color: '#A78BFA' },
-  { id: 'h4', name: '🧘 Meditate 10 min', icon: '🧘', color: '#F472B6' },
-  { id: 'h5', name: '📵 No phone after 10pm', icon: '📵', color: '#FBBF24' },
+  { id: 'h1', name: 'Drink 8 glasses of water', icon: 'droplets', color: '#60A5FA' },
+  { id: 'h2', name: 'Morning walk', icon: 'footprints', color: '#7CFC8C' },
+  { id: 'h3', name: 'Sleep 8 hours', icon: 'bed', color: '#A78BFA' },
+  { id: 'h4', name: 'Meditate 10 min', icon: 'brain', color: '#F472B6' },
+  { id: 'h5', name: 'No phone after 10pm', icon: 'smartphone', color: '#FBBF24' },
 ]
 
 export const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack']

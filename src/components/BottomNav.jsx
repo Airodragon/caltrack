@@ -1,5 +1,6 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
+import { Moon, Sun } from 'lucide-react'
 
 const TABS = [
   { to: '/', end: true, label: 'Today', icon: TodayIcon },
@@ -8,7 +9,7 @@ const TABS = [
   { to: '/stats', label: 'Stats', icon: StatsIcon },
 ]
 
-export default function BottomNav() {
+export default function BottomNav({ theme = 'light', onToggleTheme }) {
   return (
     <nav className="nav-bar">
       <div style={S.inner}>
@@ -26,6 +27,15 @@ export default function BottomNav() {
             )}
           </NavLink>
         ))}
+        <button
+          type="button"
+          style={S.themeBtn}
+          onClick={onToggleTheme}
+          aria-label="Toggle theme"
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+        </button>
       </div>
     </nav>
   )
@@ -71,6 +81,7 @@ function StatsIcon({ active }) {
 const S = {
   inner: {
     display: 'flex',
+    alignItems: 'center',
     paddingBottom: 'env(safe-area-inset-bottom, 10px)',
   },
   tab: {
@@ -92,5 +103,19 @@ const S = {
     fontWeight: 600,
     letterSpacing: '0.2px',
     transition: 'color 180ms',
+  },
+  themeBtn: {
+    marginRight: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    border: '1px solid var(--border)',
+    background: 'var(--surface)',
+    color: 'var(--text-2)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    flexShrink: 0,
   },
 }

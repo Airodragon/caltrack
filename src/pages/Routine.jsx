@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { todayKey, toLocalDateKey } from '../utils/helpers'
 import SkeletonBlock from '../components/SkeletonBlock'
+import { HabitIcon } from '../components/AppIcon'
+import { Ellipsis, Flame, PartyPopper, Plus, Sparkles } from 'lucide-react'
 
 const DAYS_BACK = 7
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-const HABIT_ICONS = ['💧', '🚶', '😴', '🧘', '📵', '🏋️', '📚', '🥗', '🏃', '🎯', '💊', '🫁', '🪥', '☀️', '🛁']
+const HABIT_ICONS = ['target', 'droplets', 'footprints', 'bed', 'brain', 'smartphone', 'dumbbell', 'book', 'salad', 'activity', 'pill', 'wind', 'sun', 'sparkles']
 const HABIT_COLORS = ['#30D158', '#0A84FF', '#BF5AF2', '#FF375F', '#FF9F0A', '#64D2FF', '#FFD60A']
 
 function buildWeekDays() {
@@ -28,7 +30,7 @@ export default function Routine() {
   const [selectedDate, setSelectedDate] = useState(todayKey())
   const [showForm, setShowForm] = useState(false)
   const [habitName, setHabitName] = useState('')
-  const [icon, setIcon] = useState('🎯')
+  const [icon, setIcon] = useState('target')
   const [color, setColor] = useState('#30D158')
   const [confirmDel, setConfirmDel] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -109,7 +111,7 @@ export default function Routine() {
                 </p>
               </div>
               {allDone ? (
-                <span style={{ fontSize: 24 }}>🎉</span>
+                <span style={{ display: 'inline-flex', color: 'var(--green)' }}><PartyPopper size={22} /></span>
               ) : (
                 <span style={{ fontSize: 24, fontWeight: 800, color: pct === 100 ? 'var(--green)' : 'var(--text-2)' }}>
                   {pct}%
@@ -134,7 +136,7 @@ export default function Routine() {
       <div className="section">
         {habits.length === 0 ? (
           <div className="empty">
-            <div className="empty-icon">✨</div>
+            <div className="empty-icon"><Sparkles size={24} /></div>
             <p>No habits yet.<br />Add your first below.</p>
           </div>
         ) : (
@@ -147,7 +149,7 @@ export default function Routine() {
                 <div key={habit.id} className="habit-row"
                   onClick={() => {
                     toggleHabit(habit.id, selectedDate)
-                    if (!done && isToday) showToast(`${habit.name.split(' ').slice(1).join(' ') || habit.name} ✓`)
+                    if (!done && isToday) showToast(`${habit.name} completed`)
                   }}
                 >
                   {/* Check circle */}
@@ -166,7 +168,7 @@ export default function Routine() {
                     fontSize: 18, flexShrink: 0,
                     transition: 'background 200ms',
                   }}>
-                    {habit.icon}
+                    <HabitIcon name={habit.icon} size={18} color={done ? habit.color : 'var(--text-2)'} />
                   </div>
 
                   {/* Text */}
@@ -180,8 +182,9 @@ export default function Routine() {
                       {habit.name}
                     </p>
                     {streak > 1 && (
-                      <p style={{ fontSize: 11, color: habit.color, fontWeight: 600, marginTop: 1 }}>
-                        🔥 {streak} day streak
+                      <p style={{ fontSize: 11, color: habit.color, fontWeight: 600, marginTop: 1, display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                        <Flame size={11} />
+                        {streak} day streak
                       </p>
                     )}
                   </div>
@@ -197,7 +200,7 @@ export default function Routine() {
                   ) : (
                     <button className="btn-icon" style={{ fontSize: 14 }}
                       onClick={e => { e.stopPropagation(); setConfirmDel(habit.id) }}>
-                      ···
+                      <Ellipsis size={15} />
                     </button>
                   )}
                 </div>
@@ -228,8 +231,11 @@ export default function Routine() {
                     style={{ width: 38, height: 38, borderRadius: 10, fontSize: 19, cursor: 'pointer',
                       background: icon === ic ? 'var(--green-dim)' : 'var(--surface-3)',
                       border: icon === ic ? '2px solid var(--green)' : '1px solid transparent',
-                      transition: 'all 150ms', }}>
-                    {ic}
+                      transition: 'all 150ms',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center' }}>
+                    <HabitIcon name={ic} size={17} color={icon === ic ? 'var(--green)' : 'var(--text-2)'} />
                   </button>
                 ))}
               </div>
@@ -256,7 +262,8 @@ export default function Routine() {
           <button className="btn btn-ghost w-full"
             style={{ borderRadius: 'var(--r-xl)', borderStyle: 'dashed', height: 48, fontSize: 14 }}
             onClick={() => setShowForm(true)}>
-            + Add Habit
+            <Plus size={16} />
+            Add Habit
           </button>
         )}
       </div>

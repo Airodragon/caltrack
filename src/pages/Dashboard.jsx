@@ -3,6 +3,8 @@ import { useApp } from '../context/AppContext'
 import { greetingByTime } from '../utils/helpers'
 import QuickAddModal from '../components/QuickAddModal'
 import SkeletonBlock from '../components/SkeletonBlock'
+import { MealTypeIcon } from '../components/AppIcon'
+import { Plus, Utensils, X } from 'lucide-react'
 
 export default function Dashboard() {
   const {
@@ -62,7 +64,7 @@ export default function Dashboard() {
             marginTop: 'calc(env(safe-area-inset-top, 44px) + 8px - 4px)',
             flexShrink: 0,
           }}
-        >+</button>
+        ><Plus size={18} strokeWidth={2.7} /></button>
       </div>
 
       {/* ── Activity Ring Card ── */}
@@ -176,7 +178,7 @@ export default function Dashboard() {
 
         {todayMeals.length === 0 ? (
           <div className="empty">
-            <div className="empty-icon">🍽️</div>
+            <div className="empty-icon"><Utensils size={24} /></div>
             <p>Nothing logged yet.<br />Tap + to add a meal.</p>
           </div>
         ) : (
@@ -186,7 +188,7 @@ export default function Dashboard() {
               return (
                 <div key={meal.id} className="grouped-item">
                   <div className="grouped-item-icon" style={{ background: 'var(--surface-3)', fontSize: 18 }}>
-                    {mealEmoji(meal.type)}
+                    <MealTypeIcon type={meal.type} size={18} color="var(--text-2)" />
                   </div>
                   <div className="grouped-item-body">
                     <p className="grouped-item-title">{meal.name}</p>
@@ -202,7 +204,7 @@ export default function Dashboard() {
                   </span>
                   <button className="btn-icon" style={{ marginLeft: 4 }}
                     onClick={() => { deleteMeal(meal.id); showToast('Removed', 'error') }}>
-                    ×
+                    <X size={14} />
                   </button>
                 </div>
               )
@@ -212,14 +214,14 @@ export default function Dashboard() {
       </div>
 
       {/* FAB */}
-      <button onClick={() => setShowAdd(true)} style={S.fab}>+</button>
+      <button onClick={() => setShowAdd(true)} style={S.fab}>
+        <Plus size={22} strokeWidth={2.6} />
+      </button>
 
       {showAdd && <QuickAddModal onClose={() => setShowAdd(false)} />}
     </div>
   )
 }
-
-const mealEmoji = (type) => ({ Breakfast: '🌅', Lunch: '☀️', Dinner: '🌙', Snack: '🍎' })[type] || '🍴'
 
 const S = {
   sectionHeader: {

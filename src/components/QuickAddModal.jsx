@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { MEAL_TYPES } from '../utils/helpers'
+import { MealTypeIcon } from './AppIcon'
 
 export default function QuickAddModal({ onClose }) {
   const { addMeal, showToast, profile } = useApp()
@@ -23,8 +24,6 @@ export default function QuickAddModal({ onClose }) {
     onClose()
   }
 
-  const EMOJIS = { Breakfast: '🌅', Lunch: '☀️', Dinner: '🌙', Snack: '🍎' }
-
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-sheet">
@@ -43,7 +42,9 @@ export default function QuickAddModal({ onClose }) {
                 fontFamily: 'var(--font)', fontSize: 11, fontWeight: 600, cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
               }}>
-              <span style={{ fontSize: 18 }}>{EMOJIS[t]}</span>
+              <span style={{ display: 'inline-flex' }}>
+                <MealTypeIcon type={t} size={18} color={type === t ? '#fff' : 'var(--text-2)'} />
+              </span>
               <span>{t}</span>
             </button>
           ))}

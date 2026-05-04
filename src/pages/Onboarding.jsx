@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
+import { ChevronLeft, Salad } from 'lucide-react'
 
 export default function Onboarding() {
   const { setProfile, setSyncKey } = useApp()
@@ -43,7 +44,7 @@ export default function Onboarding() {
                 <circle cx={36} cy={36} r={28} fill="none" stroke="var(--green)" strokeWidth={8}
                   strokeLinecap="round" strokeDasharray={175.9} strokeDashoffset={44} />
               </svg>
-              <span style={S.ringEmoji}>🥗</span>
+              <span style={S.ringEmoji}><Salad size={24} color="var(--green)" /></span>
             </div>
             <h1 style={S.logo}>CalTrack</h1>
             <p style={S.tagline}>Your personal health companion</p>
@@ -69,7 +70,9 @@ export default function Onboarding() {
       {step === 1 && (
         <div style={S.card} className="anim-pop">
           <div style={S.stepHead}>
-            <button style={S.back} onClick={() => setStep(0)}>←</button>
+            <button style={S.back} onClick={() => setStep(0)}>
+              <ChevronLeft size={16} />
+            </button>
             <h2 style={S.stepTitle}>Set your goals</h2>
             <div style={{ width: 32 }} />
           </div>

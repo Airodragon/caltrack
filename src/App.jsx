@@ -13,11 +13,18 @@ import LoadingScreen from './components/LoadingScreen'
 function AppRoutes() {
   const { profile, syncing } = useApp()
   const [booting, setBooting] = useState(true)
+  const [theme, setTheme] = useState(() => localStorage.getItem('caltrack_theme') || 'light')
 
   useEffect(() => {
     const t = setTimeout(() => setBooting(false), 600)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    document.documentElement.style.colorScheme = theme
+    localStorage.setItem('caltrack_theme', theme)
+  }, [theme])
 
   if (booting) return <LoadingScreen />
 
@@ -28,13 +35,15 @@ function AppRoutes() {
       <div className="app-shell">
         {syncing && <div className="sync-pill">Syncing...</div>}
         <Toast />
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/routine" element={<Routine />} />
-          <Route path="/calories" element={<Calories />} />
-          <Route path="/stats" element={<Stats />} />
-        </Routes>
-        <BottomNav />
+        <div className="route-content">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/routine" element={<Routine />} />
+            <Route path="/calories" element={<Calories />} />
+            <Route path="/stats" element={<Stats />} />
+          </Routes>
+        </div>
+        <BottomNav theme={theme} onToggleTheme={() => setTheme(prev => (prev === 'light' ? 'dark' : 'light'))} />
       </div>
     </BrowserRouter>
   )
