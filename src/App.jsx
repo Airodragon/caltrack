@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import Routine from './pages/Routine'
 import Calories from './pages/Calories'
 import Stats from './pages/Stats'
+import Coach from './pages/Coach'
 import BottomNav from './components/BottomNav'
 import Toast from './components/Toast'
 import LoadingScreen from './components/LoadingScreen'
@@ -41,6 +42,7 @@ function AppRoutes() {
             <Route path="/routine" element={<Routine />} />
             <Route path="/calories" element={<Calories />} />
             <Route path="/stats" element={<Stats />} />
+            <Route path="/coach" element={<Coach />} />
           </Routes>
         </div>
         <BottomNav theme={theme} onToggleTheme={() => setTheme(prev => (prev === 'light' ? 'dark' : 'light'))} />

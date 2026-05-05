@@ -4,16 +4,18 @@ import { greetingByTime } from '../utils/helpers'
 import QuickAddModal from '../components/QuickAddModal'
 import SkeletonBlock from '../components/SkeletonBlock'
 import { MealTypeIcon } from '../components/AppIcon'
-import { Plus, Utensils, X } from 'lucide-react'
+import { Plus, Utensils, X, AlertTriangle, TrendingUp, CalendarCheck2 } from 'lucide-react'
 
 export default function Dashboard() {
   const {
     profile, todayMeals, todayCalories, todayProtein, todayCarbs, todayFat,
-    habitsDoneCount, habitsTotal, deleteMeal, showToast,
+    habitsDoneCount, habitsTotal, deleteMeal, showToast, addWeight,
+    getRangeAnalytics, getRiskWindows, getWeightTrend,
   } = useApp()
 
   const [showAdd, setShowAdd] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [weightInput, setWeightInput] = useState('')
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 350)
@@ -41,6 +43,12 @@ export default function Dashboard() {
   ]
 
   const firstName = profile?.name?.split(' ')[0] || ''
+  const weekly = getRangeAnalytics(7)
+  const risk = getRiskWindows(30)
+  const trend = getWeightTrend(30)
+  const weeklyStreak = weekly.adherence.daysUnderGoal
+  const rescueCalories = isOver ? 0 : Math.round(Math.max(remaining, 0) * 0.55)
+  const isSunday = new Date().getDay() === 0
 
   return (
     <div className="page">
@@ -167,6 +175,60 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* ── Cut Coach ── */}
+      <div className="section">
+        <div style={S.sectionHeader}>
+          <span className="section-title">Cut Coach</span>
+        </div>
+        <div style={{ display: 'grid', gap: 10 }}>
+          <div className="card" style={{ padding: 14 }}>
+            <p style={S.cardLabel}><TrendingUp size={12} /> Weekly adherence</p>
+            <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--blue)' }}>{weekly.adherence.avgScore}/100</p>
+            <p style={{ fontSize: 12, color: 'var(--text-3)' }}>
+              {weeklyStreak}/{weekly.range} days under goal · Deficit {weekly.weeklyDeficit >= 0 ? '-' : '+'}{Math.abs(weekly.weeklyDeficit)} kcal
+            </p>
+          </div>
+          <div className="card" style={{ padding: 14 }}>
+            <p style={S.cardLabel}><AlertTriangle size={12} /> Damage control</p>
+            <p style={{ fontSize: 14, color: 'var(--text-2)' }}>
+              {isOver
+                ? 'You are over budget today. Prioritize lean protein + veggies for your final meal and avoid liquid calories.'
+                : `Stay around ${rescueCalories} kcal for the rest of today and target at least ${Math.max((profile?.proteinGoal || 120) - todayProtein, 0)}g protein.`}
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, textTransform: 'capitalize' }}>
+              High-risk window: {risk.topWindow}
+            </p>
+          </div>
+          {isSunday && (
+            <div className="card" style={{ padding: 14 }}>
+              <p style={S.cardLabel}><CalendarCheck2 size={12} /> Sunday check-in</p>
+              <p style={{ fontSize: 12, color: 'var(--text-3)' }}>Quick reset: log weight and set one focus for next week.</p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <input
+                  value={weightInput}
+                  onChange={(e) => setWeightInput(e.target.value)}
+                  placeholder="Weight (kg)"
+                  style={S.input}
+                />
+                <button className="btn btn-primary" onClick={() => {
+                  if (!weightInput) return
+                  addWeight(weightInput)
+                  setWeightInput('')
+                  showToast('Weight logged')
+                }}>
+                  Save
+                </button>
+              </div>
+              {trend.delta !== null && (
+                <p style={{ fontSize: 11, color: trend.delta <= 0 ? 'var(--green)' : 'var(--red)', marginTop: 6 }}>
+                  30d trend: {trend.delta > 0 ? '+' : ''}{trend.delta} kg
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* ── Today's Meals ── */}
       <div className="section">
         <div style={S.sectionHeader}>
@@ -245,5 +307,23 @@ const S = {
     boxShadow: '0 10px 22px rgba(10,132,255,0.22)',
     zIndex: 50,
     transition: 'transform 180ms',
+  },
+  cardLabel: {
+    fontSize: 10,
+    color: 'var(--text-3)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.4px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 6,
+  },
+  input: {
+    flex: 1,
+    border: '1px solid var(--border)',
+    background: 'var(--surface-2)',
+    borderRadius: 12,
+    padding: '9px 10px',
+    color: 'var(--text-1)',
   },
 }

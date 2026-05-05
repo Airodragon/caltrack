@@ -7,6 +7,7 @@ const TABS = [
   { to: '/routine', label: 'Routine', icon: RoutineIcon },
   { to: '/calories', label: 'Calories', icon: CalIcon },
   { to: '/stats', label: 'Stats', icon: StatsIcon },
+  { to: '/coach', label: 'Coach', icon: CoachIcon },
 ]
 
 export default function BottomNav({ theme = 'light', onToggleTheme }) {
@@ -74,6 +75,17 @@ function StatsIcon({ active }) {
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  )
+}
+
+function CoachIcon({ active }) {
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round">
+      <rect x="4" y="6" width="16" height="12" rx="3" />
+      <path d="M9 12h6" />
+      <circle cx="9" cy="10" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="10" r="0.9" fill="currentColor" stroke="none" />
     </svg>
   )
 }

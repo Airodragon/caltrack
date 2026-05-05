@@ -8,13 +8,13 @@ import {
   CartesianGrid, ReferenceLine,
 } from 'recharts'
 import SkeletonBlock from '../components/SkeletonBlock'
-import { CalendarDays, CheckCircle2, Flame, PieChart as PieChartIcon, Salad, BarChart3 } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Flame, PieChart as PieChartIcon, Salad, BarChart3, TrendingDown, AlertTriangle, Scale } from 'lucide-react'
 import { HabitIcon } from '../components/AppIcon'
 
 const RANGES = [7, 14, 30]
 
 export default function Stats() {
-  const { meals, habits, habitLogs, profile } = useApp()
+  const { meals, habits, habitLogs, profile, getRangeAnalytics, getWeekComparison, getRiskWindows, getWeightTrend } = useApp()
   const [range, setRange] = useState(7)
   const [loading, setLoading] = useState(true)
 
@@ -57,6 +57,10 @@ export default function Stats() {
   })
 
   const avgHabit = habitData.length ? Math.round(habitData.reduce((s, d) => s + d.pct, 0) / habitData.length) : 0
+  const rangeAnalytics = getRangeAnalytics(range)
+  const weekCompare = getWeekComparison()
+  const riskWindows = getRiskWindows(30)
+  const weightTrend = getWeightTrend(30)
 
   // ── Today macros (donut) ──────────────────────────────────
   const todayMeals = meals[today] || []
@@ -174,6 +178,92 @@ export default function Stats() {
                 Green = under goal · Red = over goal
               </p>
             </>
+          )}
+        </div>
+      </div>
+
+      {/* ── Meal Distribution ── */}
+      <div className="section">
+        <div style={S.chartHead}>
+          <span style={S.chartTitle}><PieChartIcon size={12} /> Meal Distribution</span>
+        </div>
+        <div className="card">
+          {daysWithData.length === 0 ? (
+            <div className="empty" style={{ padding: '20px 0' }}><p>Log meals to see meal split patterns</p></div>
+          ) : (
+            <ResponsiveContainer width="100%" height={190}>
+              <BarChart data={calData} margin={{ top: 4, right: 0, left: -28, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="day" tick={{ fill: 'var(--text-3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--text-3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar stackId="a" dataKey={(d) => (meals[d.date] || []).filter(m => m.type === 'Breakfast').reduce((s, m) => s + (m.calories || 0), 0)} name="Breakfast" fill="#0A84FF" />
+                <Bar stackId="a" dataKey={(d) => (meals[d.date] || []).filter(m => m.type === 'Lunch').reduce((s, m) => s + (m.calories || 0), 0)} name="Lunch" fill="#34C759" />
+                <Bar stackId="a" dataKey={(d) => (meals[d.date] || []).filter(m => m.type === 'Dinner').reduce((s, m) => s + (m.calories || 0), 0)} name="Dinner" fill="#FF9F0A" />
+                <Bar stackId="a" dataKey={(d) => (meals[d.date] || []).filter(m => m.type === 'Snack').reduce((s, m) => s + (m.calories || 0), 0)} name="Snack" fill="#FF453A" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* ── Weekly Deep Dive ── */}
+      <div className="section">
+        <div style={S.chartHead}>
+          <span style={S.chartTitle}><TrendingDown size={12} /> Weekly Deep Dive</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="card" style={{ padding: 12 }}>
+            <p style={S.metaLabel}>Estimated Deficit</p>
+            <p style={{ fontSize: 22, fontWeight: 700, color: rangeAnalytics.weeklyDeficit >= 0 ? 'var(--green)' : 'var(--red)' }}>
+              {rangeAnalytics.weeklyDeficit >= 0 ? '-' : '+'}{Math.abs(rangeAnalytics.weeklyDeficit).toLocaleString()} kcal
+            </p>
+            <p style={S.metaSub}>{range} day window</p>
+          </div>
+          <div className="card" style={{ padding: 12 }}>
+            <p style={S.metaLabel}>Adherence Score</p>
+            <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--blue)' }}>{rangeAnalytics.adherence.avgScore}/100</p>
+            <p style={S.metaSub}>{rangeAnalytics.adherence.daysUnderGoal} under-goal days</p>
+          </div>
+          <div className="card" style={{ padding: 12 }}>
+            <p style={S.metaLabel}>Week vs Last Week</p>
+            <p style={{ fontSize: 22, fontWeight: 700, color: weekCompare.deltaCalories <= 0 ? 'var(--green)' : 'var(--red)' }}>
+              {weekCompare.deltaCalories > 0 ? '+' : ''}{weekCompare.deltaCalories.toLocaleString()}
+            </p>
+            <p style={S.metaSub}>{weekCompare.deltaPct > 0 ? '+' : ''}{weekCompare.deltaPct}% calories</p>
+          </div>
+          <div className="card" style={{ padding: 12 }}>
+            <p style={S.metaLabel}>Top Risk Window</p>
+            <p style={{ fontSize: 20, fontWeight: 700, textTransform: 'capitalize' }}>{riskWindows.topWindow}</p>
+            <p style={S.metaSub}>{Math.round(riskWindows.topCalories / 30)} avg kcal/day</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Weight Trend ── */}
+      <div className="section">
+        <div style={S.chartHead}>
+          <span style={S.chartTitle}><Scale size={12} /> Weight Trend</span>
+          {weightTrend.delta !== null && (
+            <span style={{ fontSize: 11, color: weightTrend.delta <= 0 ? 'var(--green)' : 'var(--red)' }}>
+              {weightTrend.delta > 0 ? '+' : ''}{weightTrend.delta} kg
+            </span>
+          )}
+        </div>
+        <div className="card">
+          {weightTrend.values.filter(v => typeof v === 'number').length === 0 ? (
+            <div className="empty" style={{ padding: '20px 0' }}><p>Add weight logs to unlock trend analysis</p></div>
+          ) : (
+            <ResponsiveContainer width="100%" height={170}>
+              <AreaChart data={weightTrend.days.map((d, i) => ({ day: getDayLabel(d), weight: weightTrend.values[i], smooth: weightTrend.smooth[i] }))} margin={{ top: 4, right: 0, left: -28, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="day" tick={{ fill: 'var(--text-3)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--text-3)', fontSize: 10 }} axisLine={false} tickLine={false} domain={['dataMin - 0.5', 'dataMax + 0.5']} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area type="monotone" dataKey="weight" name="Weight" stroke="#FF9F0A" fill="rgba(255,159,10,0.15)" strokeWidth={2} />
+                <Area type="monotone" dataKey="smooth" name="7d avg" stroke="#0A84FF" fill="rgba(10,132,255,0.08)" strokeWidth={2.4} />
+              </AreaChart>
+            </ResponsiveContainer>
           )}
         </div>
       </div>
@@ -334,6 +424,11 @@ export default function Stats() {
         <div className="section">
           <div style={S.chartHead}>
             <span style={S.chartTitle}><CalendarDays size={12} /> 28-Day Heatmap</span>
+            {riskWindows.topWindow && (
+              <span style={{ fontSize: 11, color: 'var(--orange)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <AlertTriangle size={11} /> Risk: {riskWindows.topWindow}
+              </span>
+            )}
           </div>
           <div className="card" style={{ overflowX: 'auto' }}>
             <HabitHeatmap habits={habits} habitLogs={habitLogs} />
@@ -408,5 +503,17 @@ const S = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 5,
+  },
+  metaLabel: {
+    fontSize: 10,
+    color: 'var(--text-3)',
+    letterSpacing: '0.3px',
+    textTransform: 'uppercase',
+    fontWeight: 600,
+  },
+  metaSub: {
+    fontSize: 11,
+    color: 'var(--text-3)',
+    marginTop: 2,
   },
 }

@@ -5,6 +5,9 @@ const KEYS = {
   HABITS: 'caltrack_habits',
   HABIT_LOGS: 'caltrack_habit_logs',
   MEALS: 'caltrack_meals',
+  WEIGHTS: 'caltrack_weights',
+  CHECKINS: 'caltrack_checkins',
+  AI_SNAPSHOTS: 'caltrack_ai_snapshots',
 }
 
 export const storage = {
@@ -68,6 +71,47 @@ export const getLastNDays = (n) => {
   }
   return days
 }
+
+export const getWeekStartKey = (dateInput = new Date()) => {
+  const date = dateInput instanceof Date ? new Date(dateInput) : parseDateKey(dateInput)
+  const day = date.getDay()
+  const diffToMonday = (day + 6) % 7
+  date.setDate(date.getDate() - diffToMonday)
+  return toLocalDateKey(date)
+}
+
+export const getDateKeysBetween = (startKey, endKey) => {
+  const dates = []
+  const cursor = parseDateKey(startKey)
+  const end = parseDateKey(endKey)
+  while (cursor <= end) {
+    dates.push(toLocalDateKey(cursor))
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  return dates
+}
+
+export const sumMealNutrients = (meals = []) => meals.reduce((acc, meal) => ({
+  calories: acc.calories + (meal.calories || 0),
+  protein: acc.protein + (meal.protein || 0),
+  carbs: acc.carbs + (meal.carbs || 0),
+  fat: acc.fat + (meal.fat || 0),
+}), { calories: 0, protein: 0, carbs: 0, fat: 0 })
+
+export const calculateAdherenceScore = ({ calories, protein, calorieGoal, proteinGoal }) => {
+  const cGoal = calorieGoal || 0
+  const pGoal = proteinGoal || 0
+  const calorieScore = cGoal > 0 ? Math.max(0, 100 - Math.min(Math.abs(calories - cGoal) / cGoal, 1) * 100) : 0
+  const proteinScore = pGoal > 0 ? Math.min((protein / pGoal) * 100, 100) : 0
+  return Math.round((calorieScore * 0.6) + (proteinScore * 0.4))
+}
+
+export const rollingAverage = (values = [], window = 7) => values.map((_, idx) => {
+  const start = Math.max(0, idx - window + 1)
+  const slice = values.slice(start, idx + 1).filter(v => typeof v === 'number' && !Number.isNaN(v))
+  if (!slice.length) return null
+  return Number((slice.reduce((sum, val) => sum + val, 0) / slice.length).toFixed(2))
+})
 
 export const getDayLabel = (dateStr) => {
   const d = parseDateKey(dateStr)
