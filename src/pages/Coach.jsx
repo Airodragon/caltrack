@@ -3,14 +3,13 @@ import { Bot, Sparkles, Send, RefreshCcw, UtensilsCrossed } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import {
   getAiHistory, getAiInsights, getAiRecommendations, sendAiChat,
-  getAiInsightsFallback, getAiRecommendationsFallback, sendAiChatFallback,
   isAiBackendConfigured,
 } from '../services/aiClient'
 
 const MEAL_QUICK_ACTIONS = ['Breakfast', 'Lunch', 'Dinner', 'Snack']
 
 export default function Coach() {
-  const { syncKey, profile, todayCalories, addAiSnapshot, getAiSnapshots, showToast, getRangeAnalytics, getWeekComparison } = useApp()
+  const { syncKey, profile, todayCalories, addAiSnapshot, getAiSnapshots, showToast } = useApp()
   const [tab, setTab] = useState('chat')
   const [question, setQuestion] = useState('')
   const [chatMessages, setChatMessages] = useState([])
@@ -21,37 +20,16 @@ export default function Coach() {
   const remaining = (profile?.calorieGoal || 2000) - todayCalories
   const localSnapshots = useMemo(() => getAiSnapshots(), [getAiSnapshots])
   const canUseAi = Boolean(syncKey) && isAiBackendConfigured()
-  const thisWeekAnalytics = getRangeAnalytics(7)
-  const past14Analytics = getRangeAnalytics(14)
-  const monthAnalytics = getRangeAnalytics(30)
-  const weekComparison = getWeekComparison()
-  const thisWeekDays = thisWeekAnalytics.daily
-  const lastWeekDays = past14Analytics.daily.slice(0, 7)
-  const chatAnalytics = {
-    thisWeek: {
-      total: thisWeekAnalytics.totals.calories,
-      protein: thisWeekAnalytics.totals.protein,
-      avg: thisWeekAnalytics.avgPerDay.calories,
-      daysWithLogs: thisWeekAnalytics.adherence.daysWithLogs,
-      days: thisWeekDays.map(d => ({ date: d.date, calories: d.calories, protein: d.protein })),
-    },
-    lastWeek: {
-      total: weekComparison.lastWeekCalories,
-      protein: lastWeekDays.reduce((sum, d) => sum + (d.protein || 0), 0),
-      avg: Math.round((weekComparison.lastWeekCalories || 0) / 7),
-      daysWithLogs: lastWeekDays.filter(d => d.calories > 0).length,
-      days: lastWeekDays.map(d => ({ date: d.date, calories: d.calories, protein: d.protein })),
-    },
-    compare: weekComparison,
-    month: monthAnalytics.daily.map(d => ({ date: d.date, calories: d.calories, protein: d.protein })),
-  }
 
   const withGuardrails = async (action) => {
     setLoading(true)
     try {
+      if (!canUseAi) {
+        throw new Error('AI backend is not configured. Set sync key and VITE_AI_BASE_URL.')
+      }
       await action()
     } catch (error) {
-      showToast('AI request failed, switched to local analysis', 'error')
+      showToast('AI backend unavailable. Check sync key and backend URL.', 'error')
       console.error(error)
     } finally {
       setLoading(false)
@@ -63,49 +41,29 @@ export default function Coach() {
     const prompt = question.trim().slice(0, 500)
     setQuestion('')
     setChatMessages(prev => [...prev, { role: 'user', text: prompt }])
-    let res
-    if (canUseAi) {
-      try {
-        res = await sendAiChat({ syncKey, question: prompt })
-      } catch {
-        res = await sendAiChatFallback({ question: prompt, profile, todayCalories, analytics: chatAnalytics })
-      }
-    } else {
-      res = await sendAiChatFallback({ question: prompt, profile, todayCalories, analytics: chatAnalytics })
-    }
+    const res = await sendAiChat({ syncKey, question: prompt })
     const answer = res?.answer || 'Try keeping dinner lighter and protein high.'
     setChatMessages(prev => [...prev, { role: 'assistant', text: answer }])
     addAiSnapshot({ type: 'chat', title: prompt, payload: res })
   })
 
   const loadInsights = () => withGuardrails(async () => {
-    const res = canUseAi
-      ? await getAiInsights({ syncKey })
-      : await getAiInsightsFallback({ profile, todayCalories })
+    const res = await getAiInsights({ syncKey })
     setInsights(res)
     addAiSnapshot({ type: 'insights', title: 'Weekly brief', payload: res })
   })
 
   const loadHistory = () => withGuardrails(async () => {
-    if (!canUseAi) {
-      setHistory([])
-      return
-    }
     const res = await getAiHistory({ syncKey })
     setHistory(res.history || [])
   })
 
   const quickMealIdeas = (mealType) => withGuardrails(async () => {
-    const res = canUseAi
-      ? await getAiRecommendations({
-        syncKey,
-        mealType,
-        remainingCalories: Math.max(remaining, 250),
-      })
-      : await getAiRecommendationsFallback({
-        mealType,
-        remainingCalories: Math.max(remaining, 250),
-      })
+    const res = await getAiRecommendations({
+      syncKey,
+      mealType,
+      remainingCalories: Math.max(remaining, 250),
+    })
     const line = `${res.mealType}: ${(res.options || []).join(' | ')}`
     setChatMessages(prev => [...prev, { role: 'assistant', text: line }])
     addAiSnapshot({ type: 'recommendation', title: mealType, payload: res })
@@ -149,11 +107,12 @@ export default function Coach() {
                 <div style={{ display: 'grid', gap: 8 }}>
                   {chatMessages.map((msg, idx) => (
                     <div key={`${msg.role}-${idx}`} style={{
-                      padding: '10px 12px',
-                      borderRadius: 12,
-                      background: msg.role === 'user' ? 'var(--surface-3)' : 'rgba(10,132,255,0.12)',
+                      padding: '11px 13px',
+                      borderRadius: 14,
+                      background: msg.role === 'user' ? 'rgba(148, 163, 184, 0.18)' : 'rgba(59, 130, 246, 0.14)',
                       marginLeft: msg.role === 'user' ? '16%' : 0,
                       marginRight: msg.role === 'assistant' ? '16%' : 0,
+                      border: msg.role === 'assistant' ? '1px solid rgba(59,130,246,0.2)' : '1px solid transparent',
                     }}>
                       <p style={{ fontSize: 13 }}>{msg.text}</p>
                     </div>

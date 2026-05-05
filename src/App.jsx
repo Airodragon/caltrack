@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AppProvider, useApp } from './context/AppContext'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { auth } from './firebase'
+import Auth from './pages/Auth'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Routine from './pages/Routine'
@@ -12,14 +15,23 @@ import Toast from './components/Toast'
 import LoadingScreen from './components/LoadingScreen'
 
 function AppRoutes() {
-  const { profile, syncing } = useApp()
+  const { profile, syncing, setSyncKey } = useApp()
   const [booting, setBooting] = useState(true)
   const [theme, setTheme] = useState(() => localStorage.getItem('caltrack_theme') || 'light')
+  const [authUser, setAuthUser] = useState(null)
 
   useEffect(() => {
     const t = setTimeout(() => setBooting(false), 600)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setAuthUser(user || null)
+      if (user?.uid) setSyncKey(user.uid)
+    })
+    return () => unsub()
+  }, [setSyncKey])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -28,6 +40,8 @@ function AppRoutes() {
   }, [theme])
 
   if (booting) return <LoadingScreen />
+
+  if (!authUser) return <Auth />
 
   if (!profile) return <Onboarding />
 
@@ -45,7 +59,11 @@ function AppRoutes() {
             <Route path="/coach" element={<Coach />} />
           </Routes>
         </div>
-        <BottomNav theme={theme} onToggleTheme={() => setTheme(prev => (prev === 'light' ? 'dark' : 'light'))} />
+        <BottomNav
+          theme={theme}
+          onToggleTheme={() => setTheme(prev => (prev === 'light' ? 'dark' : 'light'))}
+          onSignOut={() => signOut(auth)}
+        />
       </div>
     </BrowserRouter>
   )

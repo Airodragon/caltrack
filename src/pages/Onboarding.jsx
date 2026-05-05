@@ -3,14 +3,13 @@ import { useApp } from '../context/AppContext'
 import { ChevronLeft, Salad } from 'lucide-react'
 
 export default function Onboarding() {
-  const { setProfile, setSyncKey } = useApp()
+  const { setProfile } = useApp()
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
   const [calories, setCalories] = useState('')
   const [protein, setProtein] = useState('')
   const [carbs, setCarbs] = useState('')
   const [fat, setFat] = useState('')
-  const [syncKey, setSyncKeyLocal] = useState('')
   const [error, setError] = useState('')
 
   const next = () => {
@@ -28,7 +27,6 @@ export default function Onboarding() {
       carbsGoal: Number(carbs) || 0,
       fatGoal: Number(fat) || 0,
     })
-    if (syncKey.trim()) setSyncKey(syncKey.trim().toLowerCase().replace(/\s+/g, '-'))
   }
 
   return (
@@ -102,14 +100,11 @@ export default function Onboarding() {
             </div>
 
             <div style={{ marginTop: 8, padding: '16px', background: 'var(--surface-3)', borderRadius: 12 }}>
-              <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
-                Multi-device Sync Key (optional)
+              <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+                Sync is automatic
               </p>
-              <input className="input" placeholder="e.g. mihir-personal" value={syncKey}
-                onChange={e => setSyncKeyLocal(e.target.value)}
-                style={{ fontSize: 14 }} />
-              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.5 }}>
-                Use the same key on all devices to sync data via Firebase.
+              <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5 }}>
+                Your account now handles secure multi-device sync for you and your friends.
               </p>
             </div>
           </div>

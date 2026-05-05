@@ -1,14 +1,15 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import { logger } from 'firebase-functions'
+import { defineSecret } from 'firebase-functions/params'
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 initializeApp()
 const db = getFirestore()
+const geminiApiKey = defineSecret('GEMINI_API_KEY')
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
 
 const firstJson = (rawText) => {
   if (!rawText) return null
@@ -70,8 +71,9 @@ const buildAnalytics = (userData) => {
 }
 
 const getModel = () => {
-  if (!GEMINI_API_KEY) return null
-  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
+  const key = geminiApiKey.value()
+  if (!key) return null
+  const genAI = new GoogleGenerativeAI(key)
   return genAI.getGenerativeModel({ model: MODEL })
 }
 
@@ -90,7 +92,7 @@ const generateJson = async ({ system, payload, fallback }) => {
   }
 }
 
-export const aiInsights = onRequest(withCors(async (req, res) => {
+export const aiInsights = onRequest({ secrets: [geminiApiKey], invoker: 'public' }, withCors(async (req, res) => {
   const startedAt = Date.now()
   const syncKey = validateSyncKey(req)
   if (!syncKey) return res.status(401).json({ error: 'Missing x-sync-key' })
@@ -118,7 +120,7 @@ export const aiInsights = onRequest(withCors(async (req, res) => {
   return res.json(insights)
 }))
 
-export const aiRecommendations = onRequest(withCors(async (req, res) => {
+export const aiRecommendations = onRequest({ secrets: [geminiApiKey], invoker: 'public' }, withCors(async (req, res) => {
   const startedAt = Date.now()
   const syncKey = validateSyncKey(req)
   if (!syncKey) return res.status(401).json({ error: 'Missing x-sync-key' })
@@ -145,7 +147,7 @@ export const aiRecommendations = onRequest(withCors(async (req, res) => {
   return res.json(recommendations)
 }))
 
-export const aiChat = onRequest(withCors(async (req, res) => {
+export const aiChat = onRequest({ secrets: [geminiApiKey], invoker: 'public' }, withCors(async (req, res) => {
   const startedAt = Date.now()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' })
   const syncKey = validateSyncKey(req)
@@ -181,7 +183,7 @@ export const aiChat = onRequest(withCors(async (req, res) => {
   return res.json(response)
 }))
 
-export const aiRecommendationHistory = onRequest(withCors(async (req, res) => {
+export const aiRecommendationHistory = onRequest({ secrets: [geminiApiKey], invoker: 'public' }, withCors(async (req, res) => {
   const startedAt = Date.now()
   const syncKey = validateSyncKey(req)
   if (!syncKey) return res.status(401).json({ error: 'Missing x-sync-key' })

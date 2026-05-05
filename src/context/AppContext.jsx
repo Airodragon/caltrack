@@ -28,6 +28,17 @@ const getFirestore = async () => {
 
 // ── Initial State ─────────────────────────────────────────────
 const getInitialState = () => ({
+  ...(() => {
+    const schemaVersion = 'caltrack_schema_v2_auth'
+    const current = storage.get('caltrack_schema_version', null)
+    if (current !== schemaVersion) {
+      Object.keys(localStorage)
+        .filter(key => key.startsWith('caltrack_'))
+        .forEach(key => localStorage.removeItem(key))
+      storage.set('caltrack_schema_version', schemaVersion)
+    }
+    return {}
+  })(),
   profile: storage.get('caltrack_profile', null),
   habits: storage.get('caltrack_habits', DEFAULT_HABITS),
   habitLogs: storage.get('caltrack_habit_logs', {}),

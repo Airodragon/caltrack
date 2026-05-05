@@ -36,9 +36,9 @@ export default function QuickAddModal({ onClose }) {
             <button key={t} onClick={() => setType(t)}
               style={{
                 flex: 1, padding: '10px 8px', borderRadius: 12,
-                background: type === t ? 'var(--green)' : 'var(--surface-3)',
+                background: type === t ? 'var(--blue)' : 'var(--surface-3)',
                 border: type === t ? 'none' : '1px solid var(--border)',
-                color: type === t ? '#000' : 'var(--text-2)',
+                color: type === t ? '#fff' : 'var(--text-2)',
                 fontFamily: 'var(--font)', fontSize: 11, fontWeight: 600, cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
               }}>

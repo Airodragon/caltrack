@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sun, LogOut } from 'lucide-react'
 
 const TABS = [
   { to: '/', end: true, label: 'Today', icon: TodayIcon },
@@ -10,7 +10,7 @@ const TABS = [
   { to: '/coach', label: 'Coach', icon: CoachIcon },
 ]
 
-export default function BottomNav({ theme = 'light', onToggleTheme }) {
+export default function BottomNav({ theme = 'light', onToggleTheme, onSignOut }) {
   return (
     <nav className="nav-bar">
       <div style={S.inner}>
@@ -36,6 +36,15 @@ export default function BottomNav({ theme = 'light', onToggleTheme }) {
           title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
         >
           {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+        </button>
+        <button
+          type="button"
+          style={S.themeBtn}
+          onClick={onSignOut}
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <LogOut size={16} />
         </button>
       </div>
     </nav>
