@@ -79,7 +79,8 @@ export default function Onboarding() {
             <div className="input-group">
               <label className="input-label" style={{ color: 'var(--green)' }}>Daily Calorie Goal (kcal) *</label>
               <input className="input" type="number" placeholder="e.g. 1800" value={calories}
-                onChange={e => setCalories(e.target.value)} style={{ textAlign: 'center', fontSize: 22, fontWeight: 700 }} />
+                onChange={e => { setCalories(e.target.value); if (error) setError('') }}
+                style={{ textAlign: 'center', fontSize: 22, fontWeight: 700 }} />
             </div>
 
             <p style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center' }}>Macro targets (optional)</p>
@@ -111,7 +112,12 @@ export default function Onboarding() {
 
           {error && <p style={S.err}>{error}</p>}
 
-          <button className="btn btn-primary w-full" style={{ marginTop: 20 }} onClick={finish}>
+          <button
+            className="btn btn-primary w-full"
+            style={{ marginTop: 20 }}
+            onClick={finish}
+            disabled={!calories || Number(calories) < 500}
+          >
             Start Tracking
           </button>
         </div>

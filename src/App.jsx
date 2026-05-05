@@ -10,28 +10,25 @@ import Routine from './pages/Routine'
 import Calories from './pages/Calories'
 import Stats from './pages/Stats'
 import Coach from './pages/Coach'
+import More from './pages/More'
 import BottomNav from './components/BottomNav'
 import Toast from './components/Toast'
 import LoadingScreen from './components/LoadingScreen'
 
 function AppRoutes() {
   const { profile, syncing, setSyncKey } = useApp()
-  const [booting, setBooting] = useState(true)
   const [theme, setTheme] = useState(() => localStorage.getItem('caltrack_theme') || 'light')
   const [authUser, setAuthUser] = useState(null)
-
-  useEffect(() => {
-    const t = setTimeout(() => setBooting(false), 600)
-    return () => clearTimeout(t)
-  }, [])
+  const [authReady, setAuthReady] = useState(false)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setAuthUser(user || null)
       if (user?.uid) setSyncKey(user.uid)
+      setAuthReady(true)
     })
     return () => unsub()
-  }, [setSyncKey])
+  }, [])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -39,7 +36,7 @@ function AppRoutes() {
     localStorage.setItem('caltrack_theme', theme)
   }, [theme])
 
-  if (booting) return <LoadingScreen />
+  if (!authReady) return <LoadingScreen label="Restoring your session..." />
 
   if (!authUser) return <Auth />
 
@@ -57,13 +54,19 @@ function AppRoutes() {
             <Route path="/calories" element={<Calories />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/coach" element={<Coach />} />
+            <Route
+              path="/more"
+              element={
+                <More
+                  theme={theme}
+                  onToggleTheme={() => setTheme(prev => (prev === 'light' ? 'dark' : 'light'))}
+                  onSignOut={() => signOut(auth)}
+                />
+              }
+            />
           </Routes>
         </div>
-        <BottomNav
-          theme={theme}
-          onToggleTheme={() => setTheme(prev => (prev === 'light' ? 'dark' : 'light'))}
-          onSignOut={() => signOut(auth)}
-        />
+        <BottomNav />
       </div>
     </BrowserRouter>
   )

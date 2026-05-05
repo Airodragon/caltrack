@@ -1,16 +1,14 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { Moon, Sun, LogOut } from 'lucide-react'
+import { Ellipsis } from 'lucide-react'
 
 const TABS = [
   { to: '/', end: true, label: 'Today', icon: TodayIcon },
-  { to: '/routine', label: 'Routine', icon: RoutineIcon },
   { to: '/calories', label: 'Calories', icon: CalIcon },
-  { to: '/stats', label: 'Stats', icon: StatsIcon },
-  { to: '/coach', label: 'Coach', icon: CoachIcon },
+  { to: '/more', label: 'More', icon: MoreIcon },
 ]
 
-export default function BottomNav({ theme = 'light', onToggleTheme, onSignOut }) {
+export default function BottomNav() {
   return (
     <nav className="nav-bar">
       <div style={S.inner}>
@@ -28,24 +26,6 @@ export default function BottomNav({ theme = 'light', onToggleTheme, onSignOut })
             )}
           </NavLink>
         ))}
-        <button
-          type="button"
-          style={S.themeBtn}
-          onClick={onToggleTheme}
-          aria-label="Toggle theme"
-          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-        </button>
-        <button
-          type="button"
-          style={S.themeBtn}
-          onClick={onSignOut}
-          aria-label="Sign out"
-          title="Sign out"
-        >
-          <LogOut size={16} />
-        </button>
       </div>
     </nav>
   )
@@ -60,15 +40,6 @@ function TodayIcon({ active }) {
   )
 }
 
-function RoutineIcon({ active }) {
-  return (
-    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round">
-      <polyline points="9 11 12 14 22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-    </svg>
-  )
-}
-
 function CalIcon({ active }) {
   return (
     <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round">
@@ -78,25 +49,8 @@ function CalIcon({ active }) {
   )
 }
 
-function StatsIcon({ active }) {
-  return (
-    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round">
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
-    </svg>
-  )
-}
-
-function CoachIcon({ active }) {
-  return (
-    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round">
-      <rect x="4" y="6" width="16" height="12" rx="3" />
-      <path d="M9 12h6" />
-      <circle cx="9" cy="10" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="15" cy="10" r="0.9" fill="currentColor" stroke="none" />
-    </svg>
-  )
+function MoreIcon() {
+  return <Ellipsis size={21} />
 }
 
 const S = {
@@ -124,19 +78,5 @@ const S = {
     fontWeight: 600,
     letterSpacing: '0.2px',
     transition: 'color 180ms',
-  },
-  themeBtn: {
-    marginRight: 10,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    border: '1px solid var(--border)',
-    background: 'var(--surface)',
-    color: 'var(--text-2)',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    flexShrink: 0,
   },
 }
