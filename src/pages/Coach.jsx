@@ -43,7 +43,8 @@ export default function Coach() {
     setChatMessages(prev => [...prev, { role: 'user', text: prompt }])
     const res = await sendAiChat({ syncKey, question: prompt })
     const answer = res?.answer || 'Try keeping dinner lighter and protein high.'
-    setChatMessages(prev => [...prev, { role: 'assistant', text: answer }])
+    const meta = res?.reasonCodes?.length ? ` (${res.reasonCodes.join(', ')})` : ''
+    setChatMessages(prev => [...prev, { role: 'assistant', text: `${answer}${meta}` }])
     addAiSnapshot({ type: 'chat', title: prompt, payload: res })
   })
 
@@ -62,7 +63,7 @@ export default function Coach() {
     const res = await getAiRecommendations({
       syncKey,
       mealType,
-      remainingCalories: Math.max(remaining, 250),
+      remainingCalories: Math.max(remaining, 0),
     })
     const line = `${res.mealType}: ${(res.options || []).join(' | ')}`
     setChatMessages(prev => [...prev, { role: 'assistant', text: line }])
@@ -151,6 +152,7 @@ export default function Coach() {
               <div className="card">
                 <p style={S.miniLabel}>Weekly summary</p>
                 <p>{insights.weeklySummary}</p>
+                {insights.confidence && <p style={{ ...S.miniLabel, marginTop: 8 }}>Confidence: {insights.confidence}</p>}
                 <p style={{ ...S.miniLabel, marginTop: 10 }}>Top improvements</p>
                 <ul style={{ margin: '6px 0 0 16px', color: 'var(--text-2)' }}>
                   {(insights.topImprovements || []).map((item, idx) => <li key={idx}>{item}</li>)}

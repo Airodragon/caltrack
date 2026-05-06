@@ -132,7 +132,7 @@ export default function Calories() {
           MEAL_TYPES.map(type => {
             const meals = byType[type]
             if (!meals.length) return null
-            const typeTotal = meals.reduce((s, m) => s + m.calories, 0)
+            const typeTotal = meals.reduce((s, m) => s + (m.calories || 0) * (m.multiplier || 1), 0)
             return (
               <div key={type} style={{ marginBottom: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, padding: '0 4px' }}>
@@ -140,7 +140,7 @@ export default function Calories() {
                     <MealTypeIcon type={type} size={13} />
                     {type}
                   </span>
-                  <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{typeTotal} kcal</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{Math.round(typeTotal)} kcal</span>
                 </div>
                 <div className="grouped-card">
                   {meals.map(meal => <MealRow key={meal.id} meal={meal} onDelete={() => { deleteMeal(meal.id); showToast('Removed', 'error') }} />)}
@@ -171,18 +171,21 @@ export default function Calories() {
 
 function MealRow({ meal, onDelete }) {
   const time = meal.time ? new Date(meal.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''
+  const multiplier = Number(meal.multiplier) > 0 ? Number(meal.multiplier) : 1
+  const totalCalories = Math.round((meal.calories || 0) * multiplier)
   return (
     <div className="grouped-item">
       <div className="grouped-item-body">
         <p className="grouped-item-title">{meal.name}</p>
         <p className="grouped-item-sub">
           {time && `${time}`}
+          {multiplier > 1 && ` · ${multiplier}x serving`}
           {meal.protein > 0 && ` · P ${meal.protein}g`}
           {meal.carbs > 0 && ` C ${meal.carbs}g`}
           {meal.fat > 0 && ` F ${meal.fat}g`}
         </p>
       </div>
-      <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', flexShrink: 0 }}>{meal.calories}</span>
+      <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', flexShrink: 0 }}>{totalCalories}</span>
       <button className="btn-icon" onClick={onDelete}><X size={14} /></button>
     </div>
   )

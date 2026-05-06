@@ -34,6 +34,14 @@ export const DEFAULT_HABITS = [
 
 export const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack']
 
+export const DEFAULT_FOOD_CATALOG = [
+  { id: 'f_oats', name: 'Oats (dry)', servingSize: 40, servingUnit: 'g', calories: 156, protein: 6.8, carbs: 26.5, fat: 2.8 },
+  { id: 'f_egg', name: 'Whole Egg', servingSize: 1, servingUnit: 'piece', calories: 72, protein: 6.3, carbs: 0.4, fat: 4.8 },
+  { id: 'f_rice', name: 'Cooked Rice', servingSize: 100, servingUnit: 'g', calories: 130, protein: 2.4, carbs: 28, fat: 0.3 },
+  { id: 'f_chicken', name: 'Chicken Breast', servingSize: 100, servingUnit: 'g', calories: 165, protein: 31, carbs: 0, fat: 3.6 },
+  { id: 'f_curd', name: 'Greek Yogurt', servingSize: 100, servingUnit: 'g', calories: 59, protein: 10, carbs: 3.6, fat: 0.4 },
+]
+
 export const MACRO_COLORS = {
   protein: '#60A5FA',
   carbs: '#FBBF24',
@@ -91,12 +99,15 @@ export const getDateKeysBetween = (startKey, endKey) => {
   return dates
 }
 
-export const sumMealNutrients = (meals = []) => meals.reduce((acc, meal) => ({
-  calories: acc.calories + (meal.calories || 0),
-  protein: acc.protein + (meal.protein || 0),
-  carbs: acc.carbs + (meal.carbs || 0),
-  fat: acc.fat + (meal.fat || 0),
-}), { calories: 0, protein: 0, carbs: 0, fat: 0 })
+export const sumMealNutrients = (meals = []) => meals.reduce((acc, meal) => {
+  const multiplier = Number(meal.multiplier) > 0 ? Number(meal.multiplier) : 1
+  return {
+    calories: acc.calories + (meal.calories || 0) * multiplier,
+    protein: acc.protein + (meal.protein || 0) * multiplier,
+    carbs: acc.carbs + (meal.carbs || 0) * multiplier,
+    fat: acc.fat + (meal.fat || 0) * multiplier,
+  }
+}, { calories: 0, protein: 0, carbs: 0, fat: 0 })
 
 export const calculateAdherenceScore = ({ calories, protein, calorieGoal, proteinGoal }) => {
   const cGoal = calorieGoal || 0

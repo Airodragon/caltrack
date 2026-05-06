@@ -4,7 +4,7 @@ import { MEAL_TYPES } from '../utils/helpers'
 import { MealTypeIcon } from './AppIcon'
 
 export default function QuickAddModal({ onClose }) {
-  const { addMeal, showToast, profile } = useApp()
+  const { addMeal, showToast, profile, getFoodCatalog, addCustomFood } = useApp()
   const [name, setName] = useState('')
   const [calories, setCalories] = useState('')
   const [protein, setProtein] = useState('')
@@ -12,16 +12,55 @@ export default function QuickAddModal({ onClose }) {
   const [fat, setFat] = useState('')
   const [type, setType] = useState('Lunch')
   const [error, setError] = useState('')
+  const [selectedFoodId, setSelectedFoodId] = useState('')
+  const [servings, setServings] = useState('1')
+  const [showCustomFood, setShowCustomFood] = useState(false)
   const nameRef = useRef()
+  const foods = getFoodCatalog()
 
   useEffect(() => { setTimeout(() => nameRef.current?.focus(), 200) }, [])
 
   const submit = () => {
     if (!name.trim()) { setError('Enter a meal name'); return }
     if (!calories || isNaN(calories) || Number(calories) < 0) { setError('Enter valid calories'); return }
-    addMeal({ name: name.trim(), type, calories: Number(calories), protein: Number(protein) || 0, carbs: Number(carbs) || 0, fat: Number(fat) || 0 })
+    addMeal({
+      name: name.trim(),
+      type,
+      calories: Number(calories),
+      protein: Number(protein) || 0,
+      carbs: Number(carbs) || 0,
+      fat: Number(fat) || 0,
+      multiplier: Number(servings) > 0 ? Number(servings) : 1,
+    })
     showToast(`${name.trim()} added ✓`)
     onClose()
+  }
+
+  const useFoodPreset = (foodId) => {
+    const food = foods.find(item => item.id === foodId)
+    if (!food) return
+    setSelectedFoodId(foodId)
+    setName(food.name)
+    setCalories(String(food.calories))
+    setProtein(String(food.protein))
+    setCarbs(String(food.carbs))
+    setFat(String(food.fat))
+  }
+
+  const saveCustomFood = () => {
+    if (!name.trim()) return setError('Food name is required')
+    if (!calories || Number(calories) < 0) return setError('Calories are required')
+    addCustomFood({
+      name: name.trim(),
+      servingSize: 1,
+      servingUnit: 'serving',
+      calories: Number(calories),
+      protein: Number(protein) || 0,
+      carbs: Number(carbs) || 0,
+      fat: Number(fat) || 0,
+    })
+    showToast('Custom food saved')
+    setShowCustomFood(false)
   }
 
   return (
@@ -29,6 +68,20 @@ export default function QuickAddModal({ onClose }) {
       <div className="modal-sheet">
         <div className="sheet-handle" />
         <div className="sheet-title">Log Meal</div>
+        <div className="input-group" style={{ marginBottom: 14 }}>
+          <label className="input-label">Pick from food list</label>
+          <select className="input" value={selectedFoodId} onChange={e => useFoodPreset(e.target.value)}>
+            <option value="">Select predefined/custom food</option>
+            {foods.map(food => (
+              <option key={food.id} value={food.id}>
+                {food.name} ({food.calories} kcal)
+              </option>
+            ))}
+          </select>
+          <button type="button" className="btn btn-ghost w-full" style={{ padding: 10 }} onClick={() => setShowCustomFood(prev => !prev)}>
+            {showCustomFood ? 'Hide Create Food' : 'Create New Food'}
+          </button>
+        </div>
 
         {/* Meal type */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, justifyContent: 'center' }}>
@@ -63,6 +116,10 @@ export default function QuickAddModal({ onClose }) {
               onChange={e => setCalories(e.target.value)}
               style={{ fontSize: 22, fontWeight: 700, textAlign: 'center' }} />
           </div>
+          <div className="input-group">
+            <label className="input-label">Servings</label>
+            <input className="input" type="number" step="0.25" value={servings} onChange={e => setServings(e.target.value)} />
+          </div>
 
           {/* Macros row */}
           <div>
@@ -82,6 +139,12 @@ export default function QuickAddModal({ onClose }) {
               ))}
             </div>
           </div>
+
+          {showCustomFood && (
+            <button className="btn btn-ghost w-full" onClick={saveCustomFood}>
+              Save as Custom Food
+            </button>
+          )}
 
           {error && <p style={{ color: 'var(--red)', fontSize: 13, textAlign: 'center' }}>{error}</p>}
 

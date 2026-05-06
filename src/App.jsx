@@ -20,6 +20,18 @@ function AppRoutes() {
   const [theme, setTheme] = useState(() => localStorage.getItem('caltrack_theme') || 'light')
   const [authUser, setAuthUser] = useState(null)
   const [authReady, setAuthReady] = useState(false)
+  const [isOffline, setIsOffline] = useState(() => !navigator.onLine)
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false)
+    const handleOffline = () => setIsOffline(true)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -46,6 +58,7 @@ function AppRoutes() {
     <BrowserRouter>
       <div className="app-shell">
         {syncing && <div className="sync-pill">Syncing...</div>}
+        {isOffline && <div className="offline-pill">Offline mode - data will sync once online</div>}
         <Toast />
         <div className="route-content">
           <Routes>

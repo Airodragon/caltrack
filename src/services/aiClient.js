@@ -1,7 +1,22 @@
 const BASE_URL = import.meta.env.VITE_AI_BASE_URL || ''
+let authModule = null
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 export const isAiBackendConfigured = () => Boolean(BASE_URL)
+
+const getAuthToken = async () => {
+  try {
+    if (!authModule) {
+      const firebase = await import('../firebase')
+      authModule = firebase.auth
+    }
+    const user = authModule?.currentUser
+    if (!user) return null
+    return user.getIdToken()
+  } catch {
+    return null
+  }
+}
 
 const callAi = async (path, { method = 'GET', syncKey, body, query } = {}) => {
   if (!BASE_URL) {
@@ -15,6 +30,7 @@ const callAi = async (path, { method = 'GET', syncKey, body, query } = {}) => {
   }
   let attempt = 0
   let lastError = null
+  const idToken = await getAuthToken()
   while (attempt < 2) {
     try {
       const res = await fetch(url.toString(), {
@@ -22,6 +38,7 @@ const callAi = async (path, { method = 'GET', syncKey, body, query } = {}) => {
         headers: {
           'Content-Type': 'application/json',
           'x-sync-key': syncKey || '',
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
         },
         body: body ? JSON.stringify(body) : undefined,
       })

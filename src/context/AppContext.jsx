@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef, useMemo } from 'react'
 import {
-  storage, DEFAULT_HABITS, todayKey, genId,
+  storage, DEFAULT_HABITS, DEFAULT_FOOD_CATALOG, todayKey, genId,
   getLastNDays, sumMealNutrients, calculateAdherenceScore, rollingAverage,
 } from '../utils/helpers'
 
@@ -10,6 +10,23 @@ const mergeByLatest = (localValue, remoteValue, updatedAtLocal, updatedAtRemote)
   if (!updatedAtLocal) return remoteValue
   if (!updatedAtRemote) return localValue
   return new Date(updatedAtRemote) >= new Date(updatedAtLocal) ? remoteValue : localValue
+}
+
+const defaultProfile = {
+  name: '',
+  calorieGoal: 2000,
+  proteinGoal: 120,
+  carbsGoal: 200,
+  fatGoal: 60,
+  height: null,
+  heightUnit: 'cm',
+  currentWeight: null,
+  targetWeight: null,
+  weightUnit: 'kg',
+  age: null,
+  sex: 'prefer_not_to_say',
+  activityLevel: 'moderate',
+  goalType: 'maintain',
 }
 
 // ── Firestore sync (lazy import so app works without Firebase config) ──────
@@ -46,6 +63,7 @@ const getInitialState = () => ({
   weights: storage.get('caltrack_weights', {}),
   checkins: storage.get('caltrack_checkins', {}),
   aiSnapshots: storage.get('caltrack_ai_snapshots', []),
+  customFoods: storage.get('caltrack_custom_foods', []),
   toast: null,
   syncing: false,
   syncKey: storage.get('caltrack_sync_key', null),
@@ -56,7 +74,7 @@ const getInitialState = () => ({
 function reducer(state, action) {
   switch (action.type) {
     case 'SET_PROFILE':
-      return { ...state, profile: action.payload }
+      return { ...state, profile: { ...defaultProfile, ...action.payload } }
     case 'SET_SYNC_KEY':
       return { ...state, syncKey: action.payload }
     case 'SET_LAST_UPDATED_AT':
@@ -81,6 +99,8 @@ function reducer(state, action) {
       const dayMeals = state.meals[date] || []
       return { ...state, meals: { ...state.meals, [date]: [...dayMeals, meal] } }
     }
+    case 'ADD_CUSTOM_FOOD':
+      return { ...state, customFoods: [action.payload, ...state.customFoods] }
     case 'ADD_WEIGHT': {
       const { date, weight } = action.payload
       return { ...state, weights: { ...state.weights, [date]: weight } }
@@ -127,9 +147,10 @@ export function AppProvider({ children }) {
     storage.set('caltrack_weights', state.weights)
     storage.set('caltrack_checkins', state.checkins)
     storage.set('caltrack_ai_snapshots', state.aiSnapshots)
+    storage.set('caltrack_custom_foods', state.customFoods)
     storage.set('caltrack_sync_key', state.syncKey)
     storage.set('caltrack_last_updated_at', state.lastUpdatedAt)
-  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.aiSnapshots, state.syncKey])
+  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.aiSnapshots, state.customFoods, state.syncKey])
 
   // ── Firestore real-time sync ──────────────────────────────
   useEffect(() => {
@@ -159,6 +180,7 @@ export function AppProvider({ children }) {
             weights: mergeByLatest(state.weights, data.weights, state.lastUpdatedAt, data.updatedAt),
             checkins: mergeByLatest(state.checkins, data.checkins, state.lastUpdatedAt, data.updatedAt),
             aiSnapshots: mergeByLatest(state.aiSnapshots, data.aiSnapshots, state.lastUpdatedAt, data.updatedAt),
+            customFoods: mergeByLatest(state.customFoods, data.customFoods, state.lastUpdatedAt, data.updatedAt),
             lastUpdatedAt: data.updatedAt || state.lastUpdatedAt,
           }
         })
@@ -196,6 +218,7 @@ export function AppProvider({ children }) {
           weights: state.weights,
           checkins: state.checkins,
           aiSnapshots: state.aiSnapshots,
+          customFoods: state.customFoods,
           updatedAt: nowIso,
         }, { merge: true })
         dispatch({ type: 'SET_LAST_UPDATED_AT', payload: nowIso })
@@ -204,7 +227,7 @@ export function AppProvider({ children }) {
         dispatch({ type: 'SET_SYNCING', payload: false })
       }
     }, 1500) // debounce 1.5s
-  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.aiSnapshots, state.syncKey, state.lastUpdatedAt])
+  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.aiSnapshots, state.customFoods, state.syncKey, state.lastUpdatedAt])
 
   // ── Toast auto-dismiss ────────────────────────────────────
   useEffect(() => {
@@ -213,18 +236,28 @@ export function AppProvider({ children }) {
     return () => clearTimeout(t)
   }, [state.toast])
 
+  // Ensure legacy profiles are upgraded to current schema.
+  useEffect(() => {
+    if (!state.profile) return
+    const merged = { ...defaultProfile, ...state.profile }
+    const changed = JSON.stringify(merged) !== JSON.stringify(state.profile)
+    if (changed) {
+      dispatch({ type: 'SET_PROFILE', payload: merged })
+    }
+  }, [state.profile])
+
   // ── Derived values ────────────────────────────────────────
   const todayMeals = state.meals[today] || []
-  const todayCalories = todayMeals.reduce((s, m) => s + (m.calories || 0), 0)
-  const todayProtein = todayMeals.reduce((s, m) => s + (m.protein || 0), 0)
-  const todayCarbs = todayMeals.reduce((s, m) => s + (m.carbs || 0), 0)
-  const todayFat = todayMeals.reduce((s, m) => s + (m.fat || 0), 0)
+  const todayCalories = Math.round(todayMeals.reduce((s, m) => s + (m.calories || 0) * (m.multiplier || 1), 0))
+  const todayProtein = Math.round(todayMeals.reduce((s, m) => s + (m.protein || 0) * (m.multiplier || 1), 0))
+  const todayCarbs = Math.round(todayMeals.reduce((s, m) => s + (m.carbs || 0) * (m.multiplier || 1), 0))
+  const todayFat = Math.round(todayMeals.reduce((s, m) => s + (m.fat || 0) * (m.multiplier || 1), 0))
   const todayHabits = state.habitLogs[today] || []
   const habitsDoneCount = todayHabits.length
   const habitsTotal = state.habits.length
 
   const selectors = useMemo(() => {
-    const calorieGoal = state.profile?.calorieGoal || 2000
+    const calorieGoal = state.profile?.calorieGoal || defaultProfile.calorieGoal
     const proteinGoal = state.profile?.proteinGoal || 0
 
     const getDailySummary = (date) => {
@@ -333,7 +366,7 @@ export function AppProvider({ children }) {
   }, [state.meals, state.profile, state.weights])
 
   const actions = {
-    setProfile: (p) => dispatch({ type: 'SET_PROFILE', payload: p }),
+    setProfile: (p) => dispatch({ type: 'SET_PROFILE', payload: { ...defaultProfile, ...(p || {}) } }),
     setSyncKey: (k) => {
       storage.set('caltrack_sync_key', k)
       dispatch({ type: 'SET_SYNC_KEY', payload: k })
@@ -341,7 +374,18 @@ export function AppProvider({ children }) {
     addHabit: (h) => dispatch({ type: 'ADD_HABIT', payload: { ...h, id: genId() } }),
     deleteHabit: (id) => dispatch({ type: 'DELETE_HABIT', payload: id }),
     toggleHabit: (habitId, date = today) => dispatch({ type: 'TOGGLE_HABIT', payload: { habitId, date } }),
-    addMeal: (meal, date = today) => dispatch({ type: 'ADD_MEAL', payload: { date, meal: { ...meal, id: genId(), time: new Date().toISOString() } } }),
+    addMeal: (meal, date = today) => dispatch({
+      type: 'ADD_MEAL',
+      payload: {
+        date,
+        meal: {
+          ...meal,
+          multiplier: Number(meal.multiplier) > 0 ? Number(meal.multiplier) : 1,
+          id: genId(),
+          time: new Date().toISOString(),
+        },
+      },
+    }),
     deleteMeal: (mealId, date = today) => dispatch({ type: 'DELETE_MEAL', payload: { date, mealId } }),
     addWeight: (weight, date = today) => dispatch({ type: 'ADD_WEIGHT', payload: { date, weight: Number(weight) } }),
     addCheckin: (payload, weekKey = today) => dispatch({ type: 'ADD_CHECKIN', payload: { weekKey, payload: { ...payload, createdAt: new Date().toISOString() } } }),
@@ -352,6 +396,8 @@ export function AppProvider({ children }) {
     getWeightsForRange: (days) => days.map(d => ({ date: d, weight: state.weights[d] ?? null })),
     getCheckinByWeek: (weekKey) => state.checkins[weekKey] || null,
     getAiSnapshots: () => state.aiSnapshots || [],
+    addCustomFood: (food) => dispatch({ type: 'ADD_CUSTOM_FOOD', payload: { ...food, id: genId(), createdAt: new Date().toISOString() } }),
+    getFoodCatalog: () => [...DEFAULT_FOOD_CATALOG, ...(state.customFoods || [])],
     ...selectors,
   }
 

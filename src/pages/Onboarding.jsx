@@ -3,13 +3,20 @@ import { useApp } from '../context/AppContext'
 import { ChevronLeft, Salad } from 'lucide-react'
 
 export default function Onboarding() {
-  const { setProfile } = useApp()
+  const { setProfile, addWeight } = useApp()
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
   const [calories, setCalories] = useState('')
   const [protein, setProtein] = useState('')
   const [carbs, setCarbs] = useState('')
   const [fat, setFat] = useState('')
+  const [height, setHeight] = useState('')
+  const [currentWeight, setCurrentWeight] = useState('')
+  const [targetWeight, setTargetWeight] = useState('')
+  const [age, setAge] = useState('')
+  const [sex, setSex] = useState('prefer_not_to_say')
+  const [activityLevel, setActivityLevel] = useState('moderate')
+  const [goalType, setGoalType] = useState('maintain')
   const [error, setError] = useState('')
 
   const next = () => {
@@ -19,14 +26,27 @@ export default function Onboarding() {
 
   const finish = () => {
     if (!calories || Number(calories) < 500) { setError('Enter a valid calorie goal'); return }
+    if (!height || Number(height) <= 0) { setError('Enter a valid height'); return }
+    if (!currentWeight || Number(currentWeight) <= 0) { setError('Enter a valid current weight'); return }
     setError('')
+    const currentWeightValue = Number(currentWeight)
     setProfile({
       name: name.trim(),
       calorieGoal: Number(calories),
       proteinGoal: Number(protein) || 0,
       carbsGoal: Number(carbs) || 0,
       fatGoal: Number(fat) || 0,
+      height: Number(height),
+      heightUnit: 'cm',
+      currentWeight: currentWeightValue,
+      targetWeight: Number(targetWeight) || currentWeightValue,
+      weightUnit: 'kg',
+      age: Number(age) || null,
+      sex,
+      activityLevel,
+      goalType,
     })
+    addWeight(currentWeightValue)
   }
 
   return (
@@ -100,6 +120,53 @@ export default function Onboarding() {
               ))}
             </div>
 
+            <p style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center' }}>Body metrics</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="input-group">
+                <label className="input-label">Height (cm) *</label>
+                <input className="input" type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="170" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Current Weight (kg) *</label>
+                <input className="input" type="number" value={currentWeight} onChange={e => setCurrentWeight(e.target.value)} placeholder="72" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Target Weight (kg)</label>
+                <input className="input" type="number" value={targetWeight} onChange={e => setTargetWeight(e.target.value)} placeholder="68" />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Age</label>
+                <input className="input" type="number" value={age} onChange={e => setAge(e.target.value)} placeholder="30" />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              <div className="input-group">
+                <label className="input-label">Sex</label>
+                <select className="input" value={sex} onChange={e => setSex(e.target.value)}>
+                  <option value="prefer_not_to_say">Prefer not to say</option>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Activity</label>
+                <select className="input" value={activityLevel} onChange={e => setActivityLevel(e.target.value)}>
+                  <option value="low">Low</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Goal Type</label>
+                <select className="input" value={goalType} onChange={e => setGoalType(e.target.value)}>
+                  <option value="lose">Lose</option>
+                  <option value="maintain">Maintain</option>
+                  <option value="gain">Gain</option>
+                </select>
+              </div>
+            </div>
+
             <div style={{ marginTop: 8, padding: '16px', background: 'var(--surface-3)', borderRadius: 12 }}>
               <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
                 Sync is automatic
@@ -116,7 +183,7 @@ export default function Onboarding() {
             className="btn btn-primary w-full"
             style={{ marginTop: 20 }}
             onClick={finish}
-            disabled={!calories || Number(calories) < 500}
+            disabled={!calories || Number(calories) < 500 || !height || !currentWeight}
           >
             Start Tracking
           </button>

@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { Mail, Lock, Globe, LogIn } from 'lucide-react'
-import { auth, googleProvider } from '../firebase'
+import { auth, googleProvider, appleProvider } from '../firebase'
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
 } from 'firebase/auth'
 
 export default function Auth() {
@@ -46,6 +47,23 @@ export default function Auth() {
     }
   }
 
+  const appleLogin = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      const isSafariLike = /Safari/i.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS|EdgiOS/i.test(navigator.userAgent)
+      if (isSafariLike) {
+        await signInWithRedirect(auth, appleProvider)
+        return
+      }
+      await signInWithPopup(auth, appleProvider)
+    } catch (e) {
+      setError((e && e.message) ? e.message.replace('Firebase: ', '') : 'Apple sign in failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="auth-screen">
       <div className="auth-card anim-pop">
@@ -73,6 +91,9 @@ export default function Auth() {
         </button>
         <button className="btn btn-ghost w-full" style={{ marginTop: 10 }} onClick={googleLogin} disabled={loading}>
           <Globe size={16} /> Continue with Google
+        </button>
+        <button className="btn btn-ghost w-full" style={{ marginTop: 10 }} onClick={appleLogin} disabled={loading}>
+          <LogIn size={16} /> Continue with Apple
         </button>
       </div>
     </div>
