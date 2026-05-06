@@ -5,6 +5,7 @@ import { Ellipsis } from 'lucide-react'
 const TABS = [
   { to: '/', end: true, label: 'Today', icon: TodayIcon },
   { to: '/calories', label: 'Calories', icon: CalIcon },
+  { to: '/routine', label: 'Routine', icon: RoutineIcon },
   { to: '/more', label: 'More', icon: MoreIcon },
 ]
 
@@ -51,6 +52,43 @@ function CalIcon({ active }) {
 
 function MoreIcon() {
   return <Ellipsis size={21} />
+}
+
+function RoutineIcon({ active }) {
+  return (
+    <svg
+      width={22}
+      height={22}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.2 : 1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Left weights */}
+      <path d="M3 9v6" />
+      <path d="M6 7v10" />
+
+      {/* Bar */}
+      <path d="M6 12h12" />
+
+      {/* Right weights */}
+      <path d="M18 7v10" />
+      <path d="M21 9v6" />
+
+      {/* Active center accent */}
+      {active && (
+        <circle
+          cx="12"
+          cy="12"
+          r="1.8"
+          fill="var(--green)"
+          stroke="none"
+        />
+      )}
+    </svg>
+  )
 }
 
 const S = {

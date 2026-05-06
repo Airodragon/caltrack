@@ -4,7 +4,6 @@ import { ChevronRight, Moon, Sun, LogOut, BarChart3, CheckCircle2, Bot } from 'l
 
 export default function More({ theme = 'light', onToggleTheme, onSignOut }) {
   const items = [
-    { to: '/routine', label: 'Routine', icon: <CheckCircle2 size={16} /> },
     { to: '/stats', label: 'Stats', icon: <BarChart3 size={16} /> },
     { to: '/coach', label: 'Coach', icon: <Bot size={16} /> },
   ]
