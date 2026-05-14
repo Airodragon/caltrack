@@ -85,7 +85,7 @@ export default function Calories() {
             {macros.map(m => {
               const p = m.goal > 0 ? Math.min((m.val / m.goal) * 100, 100) : 0
               return (
-                <div key={m.label} style={{ flex: 1, background: 'var(--surface-3)', borderRadius: 12, padding: '12px 10px' }}>
+                <div key={m.label} style={{ flex: 1, background: 'var(--surface-3)', borderRadius: 12, padding: '14px 10px' }}>
                   <p style={{ fontSize: 18, fontWeight: 700, color: m.color, letterSpacing: '-0.5px' }}>{m.val}g</p>
                   <p style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', marginTop: 1, marginBottom: 8 }}>
                     {m.label}
@@ -173,19 +173,24 @@ function MealRow({ meal, onDelete }) {
   const time = meal.time ? new Date(meal.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''
   const multiplier = Number(meal.multiplier) > 0 ? Number(meal.multiplier) : 1
   const totalCalories = Math.round((meal.calories || 0) * multiplier)
+  const subParts = [
+    time,
+    multiplier > 1 && `×${multiplier}`,
+    meal.protein > 0 && `P ${meal.protein}g`,
+    meal.carbs > 0 && `C ${meal.carbs}g`,
+    meal.fat > 0 && `F ${meal.fat}g`,
+  ].filter(Boolean)
+
   return (
     <div className="grouped-item">
+      <div className="grouped-item-icon" style={{ background: 'var(--surface-3)' }}>
+        <MealTypeIcon type={meal.type} size={16} color="var(--text-3)" />
+      </div>
       <div className="grouped-item-body">
         <p className="grouped-item-title">{meal.name}</p>
-        <p className="grouped-item-sub">
-          {time && `${time}`}
-          {multiplier > 1 && ` · ${multiplier}x serving`}
-          {meal.protein > 0 && ` · P ${meal.protein}g`}
-          {meal.carbs > 0 && ` C ${meal.carbs}g`}
-          {meal.fat > 0 && ` F ${meal.fat}g`}
-        </p>
+        <p className="grouped-item-sub">{subParts.join(' · ')}</p>
       </div>
-      <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', flexShrink: 0 }}>{totalCalories}</span>
+      <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', flexShrink: 0 }}>{totalCalories}</span>
       <button className="btn-icon" onClick={onDelete}><X size={14} /></button>
     </div>
   )

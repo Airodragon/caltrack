@@ -136,10 +136,10 @@ export default function Stats() {
             { label: 'Under goal', value: underGoalDays, sub: `of ${daysWithData.length}d`, color: 'var(--blue)' },
             { label: 'Habit avg', value: avgHabit ? `${avgHabit}%` : '—', sub: `${range}d avg`, color: 'var(--purple)' },
           ].map(s => (
-            <div key={s.label} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16, padding: '14px 12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: s.color }}>{s.value}</p>
-              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--text-3)', marginTop: 2 }}>{s.label}</p>
-              <p style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{s.sub}</p>
+            <div key={s.label} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 16, padding: '14px 10px', textAlign: 'center', overflow: 'hidden' }}>
+              <p style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px', color: s.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.value}</p>
+              <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--text-3)', marginTop: 3 }}>{s.label}</p>
+              <p style={{ fontSize: 10, color: 'var(--text-4)', marginTop: 2 }}>{s.sub}</p>
             </div>
           ))}
         </div>
@@ -440,7 +440,8 @@ export default function Stats() {
 }
 
 function HabitHeatmap({ habits, habitLogs }) {
-  const days = getLastNDays(28)
+  const [expanded, setExpanded] = React.useState(false)
+  const days = getLastNDays(expanded ? 28 : 14)
   const today = days[days.length - 1]
 
   return (
@@ -461,7 +462,7 @@ function HabitHeatmap({ habits, habitLogs }) {
                 <div key={date}
                   title={date}
                   style={{
-                    width: 26, height: 26, borderRadius: 6, flexShrink: 0,
+                    width: 24, height: 24, borderRadius: 6, flexShrink: 0,
                     background: done ? habit.color : 'var(--surface-3)',
                     opacity: done ? 1 : 0.3,
                     border: isToday ? `2px solid ${habit.color}` : 'none',
@@ -475,13 +476,23 @@ function HabitHeatmap({ habits, habitLogs }) {
       ))}
       <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
         {days.map((date, i) => (
-          <div key={date} style={{ width: 26, flexShrink: 0, textAlign: 'center' }}>
+          <div key={date} style={{ width: 24, flexShrink: 0, textAlign: 'center' }}>
             {(i % 7 === 0) && <span style={{ fontSize: 8, color: 'var(--text-3)' }}>
               {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>}
           </div>
         ))}
       </div>
+      <button
+        onClick={() => setExpanded(v => !v)}
+        style={{
+          marginTop: 10, background: 'none', border: 'none', padding: 0,
+          fontSize: 11, fontWeight: 600, color: 'var(--blue)', cursor: 'pointer',
+          fontFamily: 'var(--font)',
+        }}
+      >
+        {expanded ? 'Show 14 days ↑' : 'Show 28 days ↓'}
+      </button>
     </div>
   )
 }

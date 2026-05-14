@@ -28,13 +28,12 @@ export default function Dashboard() {
   const pct = Math.min((todayCalories / goal) * 100, 100)
 
   // Activity ring params
-  const R = 70
+  const R = 62
   const C = 2 * Math.PI * R
   const offset = C * (1 - pct / 100)
 
   const habitPct = habitsTotal > 0 ? (habitsDoneCount / habitsTotal) * 100 : 0
-  const ROUT = 22
-  const cout = 2 * Math.PI * ROUT
+  const ROUT = 20
 
   const macros = [
     { label: 'Protein', val: todayProtein, goal: profile?.proteinGoal || 0, color: 'var(--blue)' },
@@ -53,26 +52,13 @@ export default function Dashboard() {
   return (
     <div className="page">
       {/* ── Header ── */}
-      <div style={{ padding: 'calc(env(safe-area-inset-top, 44px) + 8px) 20px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <p style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 500 }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </p>
-          <h1 className="shimmer-text" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.6px', marginTop: 2, display: 'inline-block' }}>
-            {greetingByTime()}, {firstName}
-          </h1>
-        </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          style={{
-            width: 36, height: 36, borderRadius: 18,
-            background: 'var(--green)', border: 'none',
-            color: '#000', fontSize: 20, fontWeight: 700,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginTop: 'calc(env(safe-area-inset-top, 44px) + 8px - 4px)',
-            flexShrink: 0,
-          }}
-        ><Plus size={18} strokeWidth={2.7} /></button>
+      <div style={{ padding: 'calc(env(safe-area-inset-top, 44px) + 8px) 20px 8px' }}>
+        <p style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 500 }}>
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        </p>
+        <h1 className="shimmer-text" style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.6px', marginTop: 2, display: 'inline-block' }}>
+          {greetingByTime()}{firstName ? `, ${firstName}` : ''}
+        </h1>
       </div>
 
       {/* ── Activity Ring Card ── */}
@@ -86,60 +72,63 @@ export default function Dashboard() {
             <>
           {/* Ring */}
           <div style={{ position: 'relative', flexShrink: 0 }}>
-            <svg width={168} height={168} style={{ transform: 'rotate(-90deg)' }}>
+            <svg width={150} height={150} style={{ transform: 'rotate(-90deg)' }}>
               {/* Outer: Calories */}
-              <circle cx={84} cy={84} r={R} fill="none" stroke="var(--surface-3)" strokeWidth={12} />
-              <circle cx={84} cy={84} r={R} fill="none"
+              <circle cx={75} cy={75} r={R} fill="none" stroke="var(--surface-3)" strokeWidth={11} />
+              <circle cx={75} cy={75} r={R} fill="none"
                 stroke={isOver ? 'var(--red)' : 'var(--green)'}
-                strokeWidth={12} strokeLinecap="round"
+                strokeWidth={11} strokeLinecap="round"
                 strokeDasharray={C} strokeDashoffset={offset}
                 style={{ transition: 'stroke-dashoffset 900ms var(--ease-out)' }}
               />
               {/* Inner: Habits */}
-              <circle cx={84} cy={84} r={ROUT + 20} fill="none" stroke="var(--surface-3)" strokeWidth={8} />
-              <circle cx={84} cy={84} r={ROUT + 20} fill="none"
+              <circle cx={75} cy={75} r={ROUT + 18} fill="none" stroke="var(--surface-3)" strokeWidth={7} />
+              <circle cx={75} cy={75} r={ROUT + 18} fill="none"
                 stroke="var(--purple)"
-                strokeWidth={8} strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * (ROUT + 20)}
-                strokeDashoffset={2 * Math.PI * (ROUT + 20) * (1 - habitPct / 100)}
+                strokeWidth={7} strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * (ROUT + 18)}
+                strokeDashoffset={2 * Math.PI * (ROUT + 18) * (1 - habitPct / 100)}
                 style={{ transition: 'stroke-dashoffset 900ms var(--ease-out)' }}
               />
             </svg>
             {/* Center */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-1px', color: isOver ? 'var(--red)' : 'var(--text-1)', lineHeight: 1 }}>
+              <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-1px', color: isOver ? 'var(--red)' : 'var(--text-1)', lineHeight: 1 }}>
                 {todayCalories.toLocaleString()}
               </span>
-              <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', marginTop: 2 }}>
+              <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', marginTop: 2 }}>
                 kcal
               </span>
             </div>
           </div>
 
           {/* Legend */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <div style={{ width: 10, height: 10, borderRadius: 5, background: isOver ? 'var(--red)' : 'var(--green)' }} />
-                <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' }}>Calories</span>
+                <div style={{ width: 8, height: 8, borderRadius: 4, background: isOver ? 'var(--red)' : 'var(--green)', flexShrink: 0 }} />
+                <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase' }}>Calories</span>
               </div>
-              <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: isOver ? 'var(--red)' : 'var(--text-1)', lineHeight: 1 }}>
+              <p style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px', color: isOver ? 'var(--red)' : 'var(--text-1)', lineHeight: 1 }}>
                 {isOver ? '+' : ''}{Math.abs(remaining).toLocaleString()}
               </p>
-              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
-                {isOver ? 'over goal' : 'remaining'} · {goal.toLocaleString()} total
+              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+                {isOver ? 'over budget' : 'remaining'}
+              </p>
+              <p style={{ fontSize: 10, color: 'var(--text-4)', marginTop: 1 }}>
+                of {goal.toLocaleString()} kcal
               </p>
             </div>
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <div style={{ width: 10, height: 10, borderRadius: 5, background: 'var(--purple)' }} />
-                <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' }}>Routine</span>
+                <div style={{ width: 8, height: 8, borderRadius: 4, background: 'var(--purple)', flexShrink: 0 }} />
+                <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase' }}>Routine</span>
               </div>
-              <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1 }}>
-                {habitsDoneCount}<span style={{ fontSize: 14, color: 'var(--text-3)', fontWeight: 400 }}>/{habitsTotal}</span>
+              <p style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1 }}>
+                {habitsDoneCount}<span style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 500 }}>/{habitsTotal}</span>
               </p>
-              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>habits done today</p>
+              <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>habits done</p>
             </div>
           </div>
             </>
@@ -189,11 +178,11 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="card" style={{ padding: 14 }}>
-            <p style={S.cardLabel}><AlertTriangle size={12} /> Damage control</p>
-            <p style={{ fontSize: 14, color: 'var(--text-2)' }}>
+            <p style={S.cardLabel}><AlertTriangle size={12} /> Tip</p>
+            <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.45 }}>
               {isOver
-                ? 'You are over budget today. Prioritize lean protein + veggies for your final meal and avoid liquid calories.'
-                : `Stay around ${rescueCalories} kcal for the rest of today and target at least ${Math.max((profile?.proteinGoal || 120) - todayProtein, 0)}g protein.`}
+                ? `Over budget — go lean for your last meal. Avoid liquid calories.`
+                : `${rescueCalories} kcal left · need ${Math.max((profile?.proteinGoal || 120) - todayProtein, 0)}g more protein`}
             </p>
             <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, textTransform: 'capitalize' }}>
               High-risk window: {risk.topWindow}
@@ -255,10 +244,7 @@ export default function Dashboard() {
                   <div className="grouped-item-body">
                     <p className="grouped-item-title">{meal.name}</p>
                     <p className="grouped-item-sub">
-                      {t && `${t} · `}{meal.type}
-                      {meal.protein > 0 && ` · P ${meal.protein}g`}
-                      {meal.carbs > 0 && ` C ${meal.carbs}g`}
-                      {meal.fat > 0 && ` F ${meal.fat}g`}
+                      {[t, meal.type, meal.protein > 0 && `P ${meal.protein}g`].filter(Boolean).join(' · ')}
                     </p>
                   </div>
                   <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', flexShrink: 0 }}>

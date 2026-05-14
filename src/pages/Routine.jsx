@@ -178,13 +178,16 @@ export default function Routine() {
                       color: done ? 'var(--text-3)' : 'var(--text-1)',
                       textDecoration: done ? 'line-through' : 'none',
                       transition: 'all 200ms',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}>
                       {habit.name}
                     </p>
                     {streak > 1 && (
-                      <p style={{ fontSize: 11, color: habit.color, fontWeight: 600, marginTop: 1, display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                      <p style={{ fontSize: 11, color: habit.color, fontWeight: 600, marginTop: 2, display: 'inline-flex', gap: 4, alignItems: 'center' }}>
                         <Flame size={11} />
-                        {streak} day streak
+                        {streak}d streak
                       </p>
                     )}
                   </div>
