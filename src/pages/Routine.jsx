@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import { todayKey, toLocalDateKey } from '../utils/helpers'
 import SkeletonBlock from '../components/SkeletonBlock'
 import { HabitIcon } from '../components/AppIcon'
-import { Ellipsis, Flame, PartyPopper, Plus, Sparkles } from 'lucide-react'
+import { Ellipsis, Flame, PartyPopper, Plus, Sparkles, ChevronUp, ChevronDown } from 'lucide-react'
 
 const DAYS_BACK = 7
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -26,13 +26,14 @@ function buildWeekDays() {
 }
 
 export default function Routine() {
-  const { habits, habitLogs, toggleHabit, addHabit, deleteHabit, showToast } = useApp()
+  const { habits, habitLogs, toggleHabit, addHabit, deleteHabit, reorderHabit, showToast } = useApp()
   const [selectedDate, setSelectedDate] = useState(todayKey())
   const [showForm, setShowForm] = useState(false)
   const [habitName, setHabitName] = useState('')
   const [icon, setIcon] = useState('target')
   const [color, setColor] = useState('#30D158')
   const [confirmDel, setConfirmDel] = useState(null)
+  const [reorderMode, setReorderMode] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -134,6 +135,23 @@ export default function Routine() {
 
       {/* Habit list */}
       <div className="section">
+        {habits.length > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <button
+              onClick={() => setReorderMode(v => !v)}
+              style={{
+                background: reorderMode ? 'var(--blue)' : 'var(--surface-3)',
+                border: reorderMode ? 'none' : '1px solid var(--border)',
+                borderRadius: 20, padding: '5px 12px',
+                fontSize: 11, fontWeight: 700,
+                color: reorderMode ? '#fff' : 'var(--text-2)',
+                cursor: 'pointer', fontFamily: 'var(--font)',
+              }}
+            >
+              {reorderMode ? 'Done' : 'Reorder'}
+            </button>
+          </div>
+        )}
         {habits.length === 0 ? (
           <div className="empty">
             <div className="empty-icon"><Sparkles size={24} /></div>
@@ -141,7 +159,7 @@ export default function Routine() {
           </div>
         ) : (
           <div className="grouped-card">
-            {habits.map((habit) => {
+            {habits.map((habit, habitIndex) => {
               const done = doneDates.includes(habit.id)
               const streak = getStreak(habit.id)
 
@@ -192,8 +210,27 @@ export default function Routine() {
                     )}
                   </div>
 
-                  {/* Delete */}
-                  {confirmDel === habit.id ? (
+                  {/* Delete / Reorder */}
+                  {reorderMode ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }} onClick={e => e.stopPropagation()}>
+                      <button
+                        className="btn-icon"
+                        disabled={habitIndex === 0}
+                        style={{ opacity: habitIndex === 0 ? 0.3 : 1 }}
+                        onClick={() => reorderHabit(habitIndex, habitIndex - 1)}
+                      >
+                        <ChevronUp size={14} />
+                      </button>
+                      <button
+                        className="btn-icon"
+                        disabled={habitIndex === habits.length - 1}
+                        style={{ opacity: habitIndex === habits.length - 1 ? 0.3 : 1 }}
+                        onClick={() => reorderHabit(habitIndex, habitIndex + 1)}
+                      >
+                        <ChevronDown size={14} />
+                      </button>
+                    </div>
+                  ) : confirmDel === habit.id ? (
                     <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
                       <button style={S.delBtn} onClick={() => { deleteHabit(habit.id); setConfirmDel(null); showToast('Removed', 'error') }}>
                         Remove

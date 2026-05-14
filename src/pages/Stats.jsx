@@ -62,6 +62,18 @@ export default function Stats() {
   const riskWindows = getRiskWindows(30)
   const weightTrend = getWeightTrend(30)
 
+  // Weekly digest sentence
+  const weekDigest = (() => {
+    const { deltaCalories, deltaPct, thisWeekCalories, lastWeekCalories } = weekCompare
+    if (!thisWeekCalories && !lastWeekCalories) return null
+    const dir = deltaCalories < 0 ? 'down' : deltaCalories > 0 ? 'up' : 'the same'
+    const absPct = Math.abs(deltaPct)
+    const under = rangeAnalytics.adherence.daysUnderGoal
+    const total = rangeAnalytics.adherence.daysWithLogs
+    if (dir === 'the same') return `Calories were flat this week. You logged ${total} days.`
+    return `Calories were ${dir} ${absPct}% vs last week — ${thisWeekCalories.toLocaleString()} total. You hit your goal on ${under} of ${total} logged days.`
+  })()
+
   // ── Today macros (donut) ──────────────────────────────────
   const todayMeals = meals[today] || []
   const protein = todayMeals.reduce((s, m) => s + (m.protein || 0), 0)
@@ -120,6 +132,23 @@ export default function Stats() {
           </button>
         ))}
       </div>
+
+      {/* ── Weekly Digest ── */}
+      {weekDigest && (
+        <div className="section" style={{ marginBottom: 0 }}>
+          <div className="card" style={{ padding: '14px 16px', background: 'var(--surface-2)', borderLeft: '3px solid var(--blue)' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+              Weekly Digest
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>{weekDigest}</p>
+            {weightTrend.delta !== null && (
+              <p style={{ fontSize: 11, color: weightTrend.delta <= 0 ? 'var(--green)' : 'var(--red)', marginTop: 6 }}>
+                Weight trend (30d): {weightTrend.delta > 0 ? '+' : ''}{weightTrend.delta} kg
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="section">

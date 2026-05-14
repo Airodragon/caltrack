@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { greetingByTime } from '../utils/helpers'
+import { greetingByTime, getLastNDays } from '../utils/helpers'
 import QuickAddModal from '../components/QuickAddModal'
 import SkeletonBlock from '../components/SkeletonBlock'
 import { MealTypeIcon } from '../components/AppIcon'
-import { Plus, Utensils, X, AlertTriangle, TrendingUp, CalendarCheck2 } from 'lucide-react'
+import { Plus, Utensils, X, AlertTriangle, TrendingUp, CalendarCheck2, Flame, Droplets } from 'lucide-react'
 
 export default function Dashboard() {
   const {
     profile, todayMeals, todayCalories, todayProtein, todayCarbs, todayFat,
     habitsDoneCount, habitsTotal, deleteMeal, showToast, addWeight,
     getRangeAnalytics, getRiskWindows, getWeightTrend,
+    meals, habitLogs, weights, waterLogs, addWater, resetWater, today,
   } = useApp()
 
   const [showAdd, setShowAdd] = useState(false)
@@ -49,16 +50,66 @@ export default function Dashboard() {
   const rescueCalories = isOver ? 0 : Math.round(Math.max(remaining, 0) * 0.55)
   const isSunday = new Date().getDay() === 0
 
+  // Logging streak — consecutive days with at least 1 meal logged
+  const loggingStreak = (() => {
+    let s = 0
+    const d = new Date()
+    // Don't penalise today if not logged yet; start from yesterday
+    d.setDate(d.getDate() - 1)
+    while (s < 365) {
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      if (!((meals[k] || []).length > 0)) break
+      s++
+      d.setDate(d.getDate() - 1)
+    }
+    // If today has meals too, count it
+    if ((meals[today] || []).length > 0) s++
+    return s
+  })()
+
+  // Water tracking
+  const waterGoal = profile?.waterGoal || 2000
+  const waterToday = (waterLogs && waterLogs[today]) || 0
+  const waterPct = Math.min((waterToday / waterGoal) * 100, 100)
+
+  // Weight progress bar
+  const latestWeight = (() => {
+    const days = getLastNDays(90)
+    for (let i = days.length - 1; i >= 0; i--) {
+      if (weights[days[i]] != null) return weights[days[i]]
+    }
+    return profile?.currentWeight || null
+  })()
+  const startWeight = profile?.currentWeight || null
+  const targetWeight = profile?.targetWeight || null
+  const weightProgressPct = startWeight && targetWeight && startWeight !== targetWeight && latestWeight != null
+    ? Math.max(0, Math.min(100, Math.abs((startWeight - latestWeight) / (startWeight - targetWeight)) * 100))
+    : null
+
   return (
     <div className="page">
       {/* ── Header ── */}
-      <div style={{ padding: 'calc(env(safe-area-inset-top, 44px) + 8px) 20px 8px' }}>
-        <p style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 500 }}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-        </p>
-        <h1 className="shimmer-text" style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.6px', marginTop: 2, display: 'inline-block' }}>
-          {greetingByTime()}{firstName ? `, ${firstName}` : ''}
-        </h1>
+      <div style={{ padding: 'calc(env(safe-area-inset-top, 44px) + 8px) 20px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <p style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 500 }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+          <h1 className="shimmer-text" style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.6px', marginTop: 2, display: 'inline-block' }}>
+            {greetingByTime()}{firstName ? `, ${firstName}` : ''}
+          </h1>
+        </div>
+        {loggingStreak >= 2 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            background: 'var(--orange-dim)', borderRadius: 20,
+            padding: '6px 10px', marginTop: 4, flexShrink: 0,
+          }}>
+            <Flame size={13} color="var(--orange)" />
+            <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--orange)' }}>
+              {loggingStreak}d
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ── Activity Ring Card ── */}
@@ -163,6 +214,94 @@ export default function Dashboard() {
           })}
         </div>
       </div>
+
+      {/* ── Water ── */}
+      <div className="section">
+        <div style={S.sectionHeader}>
+          <span className="section-title">Hydration</span>
+          <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{waterToday} / {waterGoal} ml</span>
+        </div>
+        <div className="card" style={{ padding: '14px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div className="progress-track" style={{ height: 8, borderRadius: 6 }}>
+                <div className="progress-fill" style={{
+                  width: `${waterPct}%`,
+                  background: waterPct >= 100 ? 'var(--green)' : 'linear-gradient(90deg, #64D2FF, var(--blue))',
+                  borderRadius: 6,
+                }} />
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                {[250, 500].map(ml => (
+                  <button
+                    key={ml}
+                    onClick={() => addWater(ml)}
+                    style={{
+                      background: 'var(--surface-3)', border: '1px solid var(--border)',
+                      borderRadius: 20, padding: '5px 12px',
+                      fontSize: 12, fontWeight: 700, color: 'var(--blue)',
+                      cursor: 'pointer', fontFamily: 'var(--font)',
+                      display: 'flex', alignItems: 'center', gap: 4,
+                    }}
+                  >
+                    <Droplets size={12} />+{ml}ml
+                  </button>
+                ))}
+                {waterToday > 0 && (
+                  <button
+                    onClick={() => resetWater()}
+                    style={{
+                      background: 'none', border: 'none', padding: '5px 8px',
+                      fontSize: 11, color: 'var(--text-3)', cursor: 'pointer',
+                      fontFamily: 'var(--font)',
+                    }}
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+            <div style={{ textAlign: 'center', flexShrink: 0 }}>
+              <p style={{ fontSize: 22, fontWeight: 800, color: waterPct >= 100 ? 'var(--green)' : 'var(--blue)', letterSpacing: '-0.5px', lineHeight: 1 }}>
+                {Math.round(waterPct)}%
+              </p>
+              <p style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 600, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.3px' }}>goal</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Weight progress ── */}
+      {weightProgressPct !== null && startWeight && targetWeight && (
+        <div className="section">
+          <div style={S.sectionHeader}>
+            <span className="section-title">Weight Goal</span>
+            <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+              {latestWeight} → {targetWeight} kg
+            </span>
+          </div>
+          <div className="card" style={{ padding: '14px 16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-3)' }}>Start: {startWeight} kg</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: weightProgressPct >= 100 ? 'var(--green)' : 'var(--blue)' }}>
+                {Math.round(weightProgressPct)}% there
+              </span>
+            </div>
+            <div className="progress-track" style={{ height: 8, borderRadius: 6 }}>
+              <div className="progress-fill" style={{
+                width: `${weightProgressPct}%`,
+                background: weightProgressPct >= 100
+                  ? 'var(--green)'
+                  : 'linear-gradient(90deg, var(--blue), var(--purple))',
+                borderRadius: 6,
+              }} />
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 8 }}>
+              {Math.abs(Number((latestWeight - targetWeight).toFixed(1)))} kg to go
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── This week ── */}
       <div className="section">

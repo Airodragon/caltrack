@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import {
   ChevronLeft, User, Target, Activity, Scale,
-  CheckCircle2, Edit3,
+  CheckCircle2, Edit3, Wand2,
 } from 'lucide-react'
 
 const ACTIVITY_LABELS = { low: 'Low', moderate: 'Moderate', high: 'High' }
@@ -111,6 +111,32 @@ export default function Profile() {
     setSaved(true)
     showToast('Profile updated', 'success')
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  // Mifflin-St Jeor auto-calculate
+  const canAutoCalc = height && currentWeight && age && sex !== 'prefer_not_to_say'
+  const autoCalcGoals = () => {
+    const w = Number(currentWeight), h = Number(height), a = Number(age)
+    if (!w || !h || !a) return
+    const bmr = sex === 'male'
+      ? 10 * w + 6.25 * h - 5 * a + 5
+      : 10 * w + 6.25 * h - 5 * a - 161
+    const actMultiplier = { low: 1.375, moderate: 1.55, high: 1.725 }[activityLevel] || 1.55
+    let tdee = Math.round(bmr * actMultiplier)
+    const calTarget = goalType === 'lose'
+      ? Math.max(1200, tdee - 500)
+      : goalType === 'gain'
+        ? tdee + 300
+        : tdee
+    // Standard macro split: P 30%, C 40%, F 30%
+    const protTarget = Math.round((calTarget * 0.30) / 4)
+    const carbTarget = Math.round((calTarget * 0.40) / 4)
+    const fatTarget  = Math.round((calTarget * 0.30) / 9)
+    setCalorieGoal(String(calTarget))
+    setProteinGoal(String(protTarget))
+    setCarbsGoal(String(carbTarget))
+    setFatGoal(String(fatTarget))
+    showToast('Goals recalculated from your body data')
   }
 
   const initial = (profile?.name || 'U').charAt(0).toUpperCase()
@@ -244,7 +270,27 @@ export default function Profile() {
               />
             </div>
             <div style={{ borderTop: '1px solid var(--sep)', padding: '14px 16px' }}>
-              <label className="input-label" style={{ marginBottom: 8, display: 'block' }}>Macro Targets (optional)</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <label className="input-label">Macro Targets (optional)</label>
+                {canAutoCalc && (
+                  <button
+                    onClick={autoCalcGoals}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      background: 'var(--purple-dim)', border: 'none',
+                      borderRadius: 20, padding: '5px 10px',
+                      fontSize: 11, fontWeight: 700, color: 'var(--purple)',
+                      cursor: 'pointer', fontFamily: 'var(--font)',
+                    }}
+                  >
+                    <Wand2 size={11} />
+                    Auto-calc
+                  </button>
+                )}
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 10 }}>
+                Uses Mifflin-St Jeor formula with your body data above.
+              </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                 {[
                   { label: 'Protein (g)', value: proteinGoal, set: setProteinGoal, color: 'var(--blue)',   ph: '120' },

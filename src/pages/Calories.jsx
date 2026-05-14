@@ -80,23 +80,34 @@ export default function Calories() {
               : `${remaining.toLocaleString()} kcal to go`}
           </p>
 
-          {/* Macros row */}
+          {/* Macros row — arc rings */}
           <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
             {macros.map(m => {
-              const p = m.goal > 0 ? Math.min((m.val / m.goal) * 100, 100) : 0
+              const pct = m.goal > 0 ? Math.min((m.val / m.goal) * 100, 100) : 0
+              const R = 26, STROKE = 4
+              const circ = 2 * Math.PI * R
+              const dashOffset = circ * (1 - pct / 100)
               return (
-                <div key={m.label} style={{ flex: 1, background: 'var(--surface-3)', borderRadius: 12, padding: '14px 10px' }}>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: m.color, letterSpacing: '-0.5px' }}>{m.val}g</p>
-                  <p style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', marginTop: 1, marginBottom: 8 }}>
+                <div key={m.label} style={{ flex: 1, background: 'var(--surface-3)', borderRadius: 14, padding: '12px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <div style={{ position: 'relative', width: 62, height: 62 }}>
+                    <svg width={62} height={62} style={{ transform: 'rotate(-90deg)' }}>
+                      <circle cx={31} cy={31} r={R} fill="none" stroke="var(--surface-2)" strokeWidth={STROKE} />
+                      <circle cx={31} cy={31} r={R} fill="none"
+                        stroke={m.color} strokeWidth={STROKE} strokeLinecap="round"
+                        strokeDasharray={circ} strokeDashoffset={dashOffset}
+                        style={{ transition: 'stroke-dashoffset 700ms ease-out' }}
+                      />
+                    </svg>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: m.color, lineHeight: 1, letterSpacing: '-0.3px' }}>{m.val}</span>
+                      <span style={{ fontSize: 8, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.2px' }}>g</span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
                     {m.label}
                   </p>
-                  <div className="progress-track" style={{ height: 3 }}>
-                    <div className="progress-fill" style={{ width: m.goal > 0 ? `${p}%` : '0%', background: m.color }} />
-                  </div>
                   {m.goal > 0 && (
-                    <p style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 4 }}>
-                      {m.goal}g goal
-                    </p>
+                    <p style={{ fontSize: 9, color: 'var(--text-4)' }}>{Math.round(pct)}% of {m.goal}g</p>
                   )}
                 </div>
               )

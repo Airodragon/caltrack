@@ -11,6 +11,7 @@ import Calories from './pages/Calories'
 import Stats from './pages/Stats'
 import More from './pages/More'
 import MealPlan from './pages/MealPlan'
+import FoodLibrary from './pages/FoodLibrary'
 import Profile from './pages/Profile'
 import BottomNav from './components/BottomNav'
 import Toast from './components/Toast'
@@ -68,7 +69,8 @@ function AppRoutes() {
             <Route path="/calories" element={<Calories />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/coach" element={<Navigate to="/" replace />} />
-            <Route path="/meal-plan" element={<MealPlan />} />
+              <Route path="/meal-plan" element={<MealPlan />} />
+              <Route path="/food-library" element={<FoodLibrary />} />
             <Route path="/profile" element={<Profile />} />
             <Route
               path="/more"

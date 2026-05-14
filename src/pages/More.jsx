@@ -2,14 +2,14 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import {
   ChevronRight, Moon, Sun, LogOut, BarChart3,
-  UtensilsCrossed, UserCircle, Target, Scale,
+  UtensilsCrossed, UserCircle, Target, Scale, BookOpen,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 const GOAL_LABELS = { lose: 'Fat Loss', maintain: 'Maintain', gain: 'Gain Muscle' }
 
 export default function More({ theme = 'light', onToggleTheme, onSignOut }) {
-  const { profile } = useApp()
+  const { profile, customFoods } = useApp()
 
   const initial = (profile?.name || 'U').charAt(0).toUpperCase()
   const goalLabel = GOAL_LABELS[profile?.goalType] || 'Track Goals'
@@ -39,6 +39,14 @@ export default function More({ theme = 'light', onToggleTheme, onSignOut }) {
       icon: <UtensilsCrossed size={17} />,
       iconBg: 'var(--green-dim)',
       iconColor: 'var(--green)',
+    },
+    {
+      to: '/food-library',
+      label: 'Food Library',
+      sub: `${(customFoods || []).length} saved food${(customFoods || []).length !== 1 ? 's' : ''}`,
+      icon: <BookOpen size={17} />,
+      iconBg: 'var(--orange-dim)',
+      iconColor: 'var(--orange)',
     },
   ]
 

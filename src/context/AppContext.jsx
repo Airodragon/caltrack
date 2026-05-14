@@ -4,6 +4,7 @@ import {
   getLastNDays, sumMealNutrients, calculateAdherenceScore, rollingAverage,
 } from '../utils/helpers'
 
+// Winner-takes-all merge: if remote is newer, use remote; otherwise keep local.
 const mergeByLatest = (localValue, remoteValue, updatedAtLocal, updatedAtRemote) => {
   if (!remoteValue) return localValue
   if (!localValue) return remoteValue
@@ -28,6 +29,20 @@ const defaultProfile = {
   activityLevel: 'moderate',
   goalType: 'maintain',
 }
+
+// Empty user-data shape used when clearing between accounts
+const emptyUserData = () => ({
+  profile: null,
+  habits: DEFAULT_HABITS,
+  habitLogs: {},
+  meals: {},
+  weights: {},
+  checkins: {},
+  customFoods: [],
+  mealPlanLogs: {},
+  waterLogs: {},
+  lastUpdatedAt: null,
+})
 
 // ── Firestore sync (lazy import so app works without Firebase config) ──────
 let firestoreModule = null
@@ -68,6 +83,7 @@ const getInitialState = () => {
     checkins: storage.get('caltrack_checkins', {}),
     customFoods: storage.get('caltrack_custom_foods', []),
     mealPlanLogs: storage.get('caltrack_meal_plan_logs', {}),
+    waterLogs: storage.get('caltrack_water_logs', {}),
     toast: null,
     syncing: false,
     syncKey: storage.get('caltrack_sync_key', null),
@@ -86,6 +102,10 @@ function reducer(state, action) {
       return { ...state, lastUpdatedAt: action.payload }
     case 'HYDRATE':
       return { ...state, ...action.payload }
+
+    // Bug 3 fix: clear all user data when switching accounts
+    case 'CLEAR_USER_DATA':
+      return { ...state, ...emptyUserData() }
 
     case 'ADD_HABIT':
       return { ...state, habits: [...state.habits, action.payload] }
@@ -106,6 +126,15 @@ function reducer(state, action) {
     }
     case 'ADD_CUSTOM_FOOD':
       return { ...state, customFoods: [action.payload, ...state.customFoods] }
+    case 'DELETE_CUSTOM_FOOD':
+      return { ...state, customFoods: state.customFoods.filter(f => f.id !== action.payload) }
+    case 'UPDATE_CUSTOM_FOOD':
+      return {
+        ...state,
+        customFoods: state.customFoods.map(f =>
+          f.id === action.payload.id ? { ...f, ...action.payload.updates } : f
+        ),
+      }
     case 'ADD_WEIGHT': {
       const { date, weight } = action.payload
       return { ...state, weights: { ...state.weights, [date]: weight } }
@@ -119,6 +148,21 @@ function reducer(state, action) {
       return { ...state, meals: { ...state.meals, [date]: (state.meals[date] || []).filter(m => m.id !== mealId) } }
     }
 
+    case 'ADD_WATER': {
+      const { date, ml } = action.payload
+      return { ...state, waterLogs: { ...state.waterLogs, [date]: (state.waterLogs[date] || 0) + ml } }
+    }
+    case 'RESET_WATER': {
+      const dateKey = action.payload
+      return { ...state, waterLogs: { ...state.waterLogs, [dateKey]: 0 } }
+    }
+    case 'REORDER_HABIT': {
+      const { fromIndex, toIndex } = action.payload
+      const arr = [...state.habits]
+      const [item] = arr.splice(fromIndex, 1)
+      arr.splice(toIndex, 0, item)
+      return { ...state, habits: arr }
+    }
     case 'LOG_PLAN_MEAL': {
       const { date, slotKey } = action.payload
       const existing = state.mealPlanLogs[date] || []
@@ -151,6 +195,16 @@ export function AppProvider({ children }) {
   const unsubscribeRef = useRef(null)
   const isSyncingFromCloud = useRef(false)
 
+  // Bug 2 fix: always-current ref so the onSnapshot closure is never stale
+  const stateRef = useRef(state)
+  useEffect(() => { stateRef.current = state })
+
+  // Bug 1 fix: block push until the initial snapshot has been attempted
+  const hasAttemptedInitialSync = useRef(false)
+
+  // Track the previous syncKey so we can detect account switches
+  const prevSyncKeyRef = useRef(state.syncKey)
+
   const today = todayKey()
 
   // ── Persist to localStorage ──────────────────────────────
@@ -163,13 +217,23 @@ export function AppProvider({ children }) {
     storage.set('caltrack_checkins', state.checkins)
     storage.set('caltrack_custom_foods', state.customFoods)
     storage.set('caltrack_meal_plan_logs', state.mealPlanLogs)
+    storage.set('caltrack_water_logs', state.waterLogs)
     storage.set('caltrack_sync_key', state.syncKey)
     storage.set('caltrack_last_updated_at', state.lastUpdatedAt)
-  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.customFoods, state.mealPlanLogs, state.syncKey])
+  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.customFoods, state.mealPlanLogs, state.waterLogs, state.syncKey])
 
   // ── Firestore real-time sync ──────────────────────────────
   useEffect(() => {
     if (!state.syncKey) return
+
+    // Bug 3 fix: if the syncKey changed (account switch), clear previous user's data first
+    if (prevSyncKeyRef.current && prevSyncKeyRef.current !== state.syncKey) {
+      dispatch({ type: 'CLEAR_USER_DATA' })
+    }
+    prevSyncKeyRef.current = state.syncKey
+
+    // Reset the initial-sync guard for this account
+    hasAttemptedInitialSync.current = false
 
     let active = true
 
@@ -180,26 +244,36 @@ export function AppProvider({ children }) {
       const { db, doc, onSnapshot } = fs
       const userDoc = doc(db, 'users', state.syncKey)
 
-      // Subscribe to remote changes
       const unsub = onSnapshot(userDoc, (snap) => {
+        // Mark that we've received the first response (even if doc doesn't exist yet)
+        hasAttemptedInitialSync.current = true
+
         if (!snap.exists()) return
+
         const data = snap.data()
+        const s = stateRef.current  // Bug 2 fix: use ref, not stale closure
+
         isSyncingFromCloud.current = true
         dispatch({
           type: 'HYDRATE',
           payload: {
-            profile: mergeByLatest(state.profile, data.profile, state.lastUpdatedAt, data.updatedAt),
-            habits: mergeByLatest(state.habits, data.habits, state.lastUpdatedAt, data.updatedAt),
-            habitLogs: mergeByLatest(state.habitLogs, data.habitLogs, state.lastUpdatedAt, data.updatedAt),
-            meals: mergeByLatest(state.meals, data.meals, state.lastUpdatedAt, data.updatedAt),
-            weights: mergeByLatest(state.weights, data.weights, state.lastUpdatedAt, data.updatedAt),
-            checkins: mergeByLatest(state.checkins, data.checkins, state.lastUpdatedAt, data.updatedAt),
-            customFoods: mergeByLatest(state.customFoods, data.customFoods, state.lastUpdatedAt, data.updatedAt),
-            lastUpdatedAt: data.updatedAt || state.lastUpdatedAt,
-          }
+            profile:      mergeByLatest(s.profile,      data.profile,      s.lastUpdatedAt, data.updatedAt),
+            habits:       mergeByLatest(s.habits,       data.habits,       s.lastUpdatedAt, data.updatedAt),
+            habitLogs:    mergeByLatest(s.habitLogs,    data.habitLogs,    s.lastUpdatedAt, data.updatedAt),
+            meals:        mergeByLatest(s.meals,        data.meals,        s.lastUpdatedAt, data.updatedAt),
+            weights:      mergeByLatest(s.weights,      data.weights,      s.lastUpdatedAt, data.updatedAt),
+            checkins:     mergeByLatest(s.checkins,     data.checkins,     s.lastUpdatedAt, data.updatedAt),
+            customFoods:  mergeByLatest(s.customFoods,  data.customFoods,  s.lastUpdatedAt, data.updatedAt),
+            mealPlanLogs: mergeByLatest(s.mealPlanLogs, data.mealPlanLogs, s.lastUpdatedAt, data.updatedAt),
+            waterLogs:    mergeByLatest(s.waterLogs,    data.waterLogs,    s.lastUpdatedAt, data.updatedAt),
+            lastUpdatedAt: data.updatedAt || s.lastUpdatedAt,
+          },
         })
-        setTimeout(() => { isSyncingFromCloud.current = false }, 100)
-      }, () => { /* silent fail — offline */ })
+        setTimeout(() => { isSyncingFromCloud.current = false }, 150)
+      }, () => {
+        // On permission error or offline: unblock push so local writes still proceed
+        hasAttemptedInitialSync.current = true
+      })
 
       unsubscribeRef.current = unsub
     }
@@ -214,10 +288,13 @@ export function AppProvider({ children }) {
   // ── Push changes to Firestore ─────────────────────────────
   const pushTimeoutRef = useRef(null)
   useEffect(() => {
-    if (!state.syncKey || isSyncingFromCloud.current) return
+    // Bug 1 fix: never push before the first snapshot response
+    if (!state.syncKey || isSyncingFromCloud.current || !hasAttemptedInitialSync.current) return
 
     clearTimeout(pushTimeoutRef.current)
     pushTimeoutRef.current = setTimeout(async () => {
+      if (isSyncingFromCloud.current) return  // guard again after debounce delay
+
       const fs = await getFirestore()
       if (!fs) return
       const { db, doc, setDoc } = fs
@@ -232,15 +309,17 @@ export function AppProvider({ children }) {
           weights: state.weights,
           checkins: state.checkins,
           customFoods: state.customFoods,
+          mealPlanLogs: state.mealPlanLogs,
+          waterLogs: state.waterLogs,
           updatedAt: nowIso,
         }, { merge: true })
         dispatch({ type: 'SET_LAST_UPDATED_AT', payload: nowIso })
-      } catch { /* offline */ }
+      } catch { /* offline — will retry on next change */ }
       finally {
         dispatch({ type: 'SET_SYNCING', payload: false })
       }
-    }, 1500) // debounce 1.5s
-  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.customFoods, state.syncKey, state.lastUpdatedAt])
+    }, 1500)
+  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.customFoods, state.mealPlanLogs, state.waterLogs, state.syncKey, state.lastUpdatedAt])
 
   // ── Toast auto-dismiss ────────────────────────────────────
   useEffect(() => {
@@ -408,7 +487,13 @@ export function AppProvider({ children }) {
     getWeightsForRange: (days) => days.map(d => ({ date: d, weight: state.weights[d] ?? null })),
     getCheckinByWeek: (weekKey) => state.checkins[weekKey] || null,
     addCustomFood: (food) => dispatch({ type: 'ADD_CUSTOM_FOOD', payload: { ...food, id: genId(), createdAt: new Date().toISOString() } }),
+    deleteCustomFood: (id) => dispatch({ type: 'DELETE_CUSTOM_FOOD', payload: id }),
+    updateCustomFood: (id, updates) => dispatch({ type: 'UPDATE_CUSTOM_FOOD', payload: { id, updates } }),
     getFoodCatalog: () => [...DEFAULT_FOOD_CATALOG, ...(state.customFoods || [])],
+    addWater: (ml = 250, date = today) => dispatch({ type: 'ADD_WATER', payload: { date, ml } }),
+    resetWater: (date = today) => dispatch({ type: 'RESET_WATER', payload: date }),
+    getWaterForDate: (date) => state.waterLogs[date] || 0,
+    reorderHabit: (fromIndex, toIndex) => dispatch({ type: 'REORDER_HABIT', payload: { fromIndex, toIndex } }),
     logPlanMeal: (meal, slotKey, date = today) => {
       const already = (state.mealPlanLogs[date] || []).includes(slotKey)
       if (!already) {
