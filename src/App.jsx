@@ -11,6 +11,7 @@ import Calories from './pages/Calories'
 import Stats from './pages/Stats'
 import More from './pages/More'
 import MealPlan from './pages/MealPlan'
+import Profile from './pages/Profile'
 import BottomNav from './components/BottomNav'
 import Toast from './components/Toast'
 import LoadingScreen from './components/LoadingScreen'
@@ -68,6 +69,7 @@ function AppRoutes() {
             <Route path="/stats" element={<Stats />} />
             <Route path="/coach" element={<Navigate to="/" replace />} />
             <Route path="/meal-plan" element={<MealPlan />} />
+            <Route path="/profile" element={<Profile />} />
             <Route
               path="/more"
               element={
