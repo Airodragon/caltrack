@@ -65,7 +65,7 @@ export default function Onboarding() {
               <span style={S.ringEmoji}><Salad size={24} color="var(--green)" /></span>
             </div>
             <h1 style={S.logo}>CalTrack</h1>
-            <p style={S.tagline}>Your personal health companion</p>
+            <p style={S.tagline}>Calories and habits, in one place</p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 32 }}>
@@ -169,10 +169,10 @@ export default function Onboarding() {
 
             <div style={{ marginTop: 8, padding: '16px', background: 'var(--surface-3)', borderRadius: 12 }}>
               <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
-                Sync is automatic
+                Cloud backup
               </p>
               <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5 }}>
-                Your account now handles secure multi-device sync for you and your friends.
+                When you are signed in, your data syncs across your devices through Firebase.
               </p>
             </div>
           </div>

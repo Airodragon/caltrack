@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider, useApp } from './context/AppContext'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { auth } from './firebase'
@@ -9,8 +9,8 @@ import Dashboard from './pages/Dashboard'
 import Routine from './pages/Routine'
 import Calories from './pages/Calories'
 import Stats from './pages/Stats'
-import Coach from './pages/Coach'
 import More from './pages/More'
+import MealPlan from './pages/MealPlan'
 import BottomNav from './components/BottomNav'
 import Toast from './components/Toast'
 import LoadingScreen from './components/LoadingScreen'
@@ -66,7 +66,8 @@ function AppRoutes() {
             <Route path="/routine" element={<Routine />} />
             <Route path="/calories" element={<Calories />} />
             <Route path="/stats" element={<Stats />} />
-            <Route path="/coach" element={<Coach />} />
+            <Route path="/coach" element={<Navigate to="/" replace />} />
+            <Route path="/meal-plan" element={<MealPlan />} />
             <Route
               path="/more"
               element={

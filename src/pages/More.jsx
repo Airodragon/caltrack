@@ -1,11 +1,11 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Moon, Sun, LogOut, BarChart3, CheckCircle2, Bot } from 'lucide-react'
+import { ChevronRight, Moon, Sun, LogOut, BarChart3, UtensilsCrossed } from 'lucide-react'
 
 export default function More({ theme = 'light', onToggleTheme, onSignOut }) {
   const items = [
     { to: '/stats', label: 'Stats', icon: <BarChart3 size={16} /> },
-    { to: '/coach', label: 'Coach', icon: <Bot size={16} /> },
+    { to: '/meal-plan', label: 'Meal Plan', icon: <UtensilsCrossed size={16} /> },
   ]
 
   return (

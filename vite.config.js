@@ -10,7 +10,7 @@ export default defineConfig({
       manifest: {
         name: 'CalTrack',
         short_name: 'CalTrack',
-        description: 'Your nutrition and routine coach',
+        description: 'Your nutrition and routine tracker',
         display: 'standalone',
         start_url: '/',
         theme_color: '#0f172a',

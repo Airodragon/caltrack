@@ -175,10 +175,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Cut Coach ── */}
+      {/* ── This week ── */}
       <div className="section">
         <div style={S.sectionHeader}>
-          <span className="section-title">Cut Coach</span>
+          <span className="section-title">This week</span>
         </div>
         <div style={{ display: 'grid', gap: 10 }}>
           <div className="card" style={{ padding: 14 }}>

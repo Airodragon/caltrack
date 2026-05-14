@@ -108,7 +108,7 @@ export default function Stats() {
     <div className="page">
       {/* Header */}
       <div style={{ padding: 'calc(env(safe-area-inset-top,44px) + 8px) 20px 16px' }}>
-        <p className="page-subtitle">Health overview</p>
+        <p className="page-subtitle">Your progress</p>
         <h1 className="page-title shimmer-text" style={{ display: 'inline-block' }}>Stats</h1>
       </div>
 

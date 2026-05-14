@@ -44,8 +44,8 @@ const getFirestore = async () => {
 }
 
 // ── Initial State ─────────────────────────────────────────────
-const getInitialState = () => ({
-  ...(() => {
+const getInitialState = () => {
+  ;(() => {
     const schemaVersion = 'caltrack_schema_v2_auth'
     const current = storage.get('caltrack_schema_version', null)
     if (current !== schemaVersion) {
@@ -54,21 +54,26 @@ const getInitialState = () => ({
         .forEach(key => localStorage.removeItem(key))
       storage.set('caltrack_schema_version', schemaVersion)
     }
-    return {}
-  })(),
-  profile: storage.get('caltrack_profile', null),
-  habits: storage.get('caltrack_habits', DEFAULT_HABITS),
-  habitLogs: storage.get('caltrack_habit_logs', {}),
-  meals: storage.get('caltrack_meals', {}),
-  weights: storage.get('caltrack_weights', {}),
-  checkins: storage.get('caltrack_checkins', {}),
-  aiSnapshots: storage.get('caltrack_ai_snapshots', []),
-  customFoods: storage.get('caltrack_custom_foods', []),
-  toast: null,
-  syncing: false,
-  syncKey: storage.get('caltrack_sync_key', null),
-  lastUpdatedAt: storage.get('caltrack_last_updated_at', null),
-})
+  })()
+  try {
+    localStorage.removeItem('caltrack_ai_snapshots')
+  } catch { /* noop */ }
+
+  return {
+    profile: storage.get('caltrack_profile', null),
+    habits: storage.get('caltrack_habits', DEFAULT_HABITS),
+    habitLogs: storage.get('caltrack_habit_logs', {}),
+    meals: storage.get('caltrack_meals', {}),
+    weights: storage.get('caltrack_weights', {}),
+    checkins: storage.get('caltrack_checkins', {}),
+    customFoods: storage.get('caltrack_custom_foods', []),
+    mealPlanLogs: storage.get('caltrack_meal_plan_logs', {}),
+    toast: null,
+    syncing: false,
+    syncKey: storage.get('caltrack_sync_key', null),
+    lastUpdatedAt: storage.get('caltrack_last_updated_at', null),
+  }
+}
 
 // ── Reducer ───────────────────────────────────────────────────
 function reducer(state, action) {
@@ -109,12 +114,22 @@ function reducer(state, action) {
       const { weekKey, payload } = action.payload
       return { ...state, checkins: { ...state.checkins, [weekKey]: payload } }
     }
-    case 'ADD_AI_SNAPSHOT': {
-      return { ...state, aiSnapshots: [action.payload, ...state.aiSnapshots].slice(0, 50) }
-    }
     case 'DELETE_MEAL': {
       const { date, mealId } = action.payload
       return { ...state, meals: { ...state.meals, [date]: (state.meals[date] || []).filter(m => m.id !== mealId) } }
+    }
+
+    case 'LOG_PLAN_MEAL': {
+      const { date, slotKey } = action.payload
+      const existing = state.mealPlanLogs[date] || []
+      const already = existing.includes(slotKey)
+      return {
+        ...state,
+        mealPlanLogs: {
+          ...state.mealPlanLogs,
+          [date]: already ? existing.filter(k => k !== slotKey) : [...existing, slotKey],
+        },
+      }
     }
 
     case 'SHOW_TOAST':
@@ -146,11 +161,11 @@ export function AppProvider({ children }) {
     storage.set('caltrack_meals', state.meals)
     storage.set('caltrack_weights', state.weights)
     storage.set('caltrack_checkins', state.checkins)
-    storage.set('caltrack_ai_snapshots', state.aiSnapshots)
     storage.set('caltrack_custom_foods', state.customFoods)
+    storage.set('caltrack_meal_plan_logs', state.mealPlanLogs)
     storage.set('caltrack_sync_key', state.syncKey)
     storage.set('caltrack_last_updated_at', state.lastUpdatedAt)
-  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.aiSnapshots, state.customFoods, state.syncKey])
+  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.customFoods, state.mealPlanLogs, state.syncKey])
 
   // ── Firestore real-time sync ──────────────────────────────
   useEffect(() => {
@@ -179,7 +194,6 @@ export function AppProvider({ children }) {
             meals: mergeByLatest(state.meals, data.meals, state.lastUpdatedAt, data.updatedAt),
             weights: mergeByLatest(state.weights, data.weights, state.lastUpdatedAt, data.updatedAt),
             checkins: mergeByLatest(state.checkins, data.checkins, state.lastUpdatedAt, data.updatedAt),
-            aiSnapshots: mergeByLatest(state.aiSnapshots, data.aiSnapshots, state.lastUpdatedAt, data.updatedAt),
             customFoods: mergeByLatest(state.customFoods, data.customFoods, state.lastUpdatedAt, data.updatedAt),
             lastUpdatedAt: data.updatedAt || state.lastUpdatedAt,
           }
@@ -217,7 +231,6 @@ export function AppProvider({ children }) {
           meals: state.meals,
           weights: state.weights,
           checkins: state.checkins,
-          aiSnapshots: state.aiSnapshots,
           customFoods: state.customFoods,
           updatedAt: nowIso,
         }, { merge: true })
@@ -227,7 +240,7 @@ export function AppProvider({ children }) {
         dispatch({ type: 'SET_SYNCING', payload: false })
       }
     }, 1500) // debounce 1.5s
-  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.aiSnapshots, state.customFoods, state.syncKey, state.lastUpdatedAt])
+  }, [state.profile, state.habits, state.habitLogs, state.meals, state.weights, state.checkins, state.customFoods, state.syncKey, state.lastUpdatedAt])
 
   // ── Toast auto-dismiss ────────────────────────────────────
   useEffect(() => {
@@ -389,15 +402,38 @@ export function AppProvider({ children }) {
     deleteMeal: (mealId, date = today) => dispatch({ type: 'DELETE_MEAL', payload: { date, mealId } }),
     addWeight: (weight, date = today) => dispatch({ type: 'ADD_WEIGHT', payload: { date, weight: Number(weight) } }),
     addCheckin: (payload, weekKey = today) => dispatch({ type: 'ADD_CHECKIN', payload: { weekKey, payload: { ...payload, createdAt: new Date().toISOString() } } }),
-    addAiSnapshot: (payload) => dispatch({ type: 'ADD_AI_SNAPSHOT', payload: { ...payload, id: genId(), createdAt: new Date().toISOString() } }),
     showToast: (msg, type = 'success') => dispatch({ type: 'SHOW_TOAST', payload: { msg, type } }),
     getMealsForDate: (date) => state.meals[date] || [],
     getHabitsForDate: (date) => state.habitLogs[date] || [],
     getWeightsForRange: (days) => days.map(d => ({ date: d, weight: state.weights[d] ?? null })),
     getCheckinByWeek: (weekKey) => state.checkins[weekKey] || null,
-    getAiSnapshots: () => state.aiSnapshots || [],
     addCustomFood: (food) => dispatch({ type: 'ADD_CUSTOM_FOOD', payload: { ...food, id: genId(), createdAt: new Date().toISOString() } }),
     getFoodCatalog: () => [...DEFAULT_FOOD_CATALOG, ...(state.customFoods || [])],
+    logPlanMeal: (meal, slotKey, date = today) => {
+      const already = (state.mealPlanLogs[date] || []).includes(slotKey)
+      if (!already) {
+        dispatch({
+          type: 'ADD_MEAL',
+          payload: {
+            date,
+            meal: {
+              name: meal.name,
+              type: meal.type,
+              calories: meal.calories,
+              protein: meal.protein,
+              carbs: meal.carbs,
+              fat: meal.fat,
+              multiplier: 1,
+              id: genId(),
+              time: new Date().toISOString(),
+              fromPlan: true,
+            },
+          },
+        })
+      }
+      dispatch({ type: 'LOG_PLAN_MEAL', payload: { date, slotKey } })
+    },
+    isPlanMealLogged: (slotKey, date = today) => (state.mealPlanLogs[date] || []).includes(slotKey),
     ...selectors,
   }
 
