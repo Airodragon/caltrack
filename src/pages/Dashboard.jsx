@@ -17,6 +17,8 @@ export default function Dashboard() {
   const [showAdd, setShowAdd] = useState(false)
   const [loading, setLoading] = useState(true)
   const [weightInput, setWeightInput] = useState('')
+  const [customWaterMl, setCustomWaterMl] = useState('')
+  const [showCustomWater, setShowCustomWater] = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 350)
@@ -247,6 +249,18 @@ export default function Dashboard() {
                     <Droplets size={12} />+{ml}ml
                   </button>
                 ))}
+                <button
+                  onClick={() => setShowCustomWater(v => !v)}
+                  style={{
+                    background: showCustomWater ? 'var(--blue-dim)' : 'var(--surface-3)',
+                    border: showCustomWater ? '1px solid var(--blue)' : '1px solid var(--border)',
+                    borderRadius: 20, padding: '5px 12px',
+                    fontSize: 12, fontWeight: 700, color: 'var(--blue)',
+                    cursor: 'pointer', fontFamily: 'var(--font)',
+                  }}
+                >
+                  Custom
+                </button>
                 {waterToday > 0 && (
                   <button
                     onClick={() => resetWater()}
@@ -260,6 +274,34 @@ export default function Dashboard() {
                   </button>
                 )}
               </div>
+              {showCustomWater && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    value={customWaterMl}
+                    onChange={e => setCustomWaterMl(e.target.value)}
+                    placeholder="Amount in ml"
+                    style={{
+                      flex: 1, border: '1px solid var(--border)', background: 'var(--surface-2)',
+                      borderRadius: 12, padding: '8px 10px', color: 'var(--text-1)',
+                      fontFamily: 'var(--font)', fontSize: 13,
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      const ml = Number(customWaterMl)
+                      if (ml > 0) { addWater(ml); setCustomWaterMl(''); setShowCustomWater(false) }
+                    }}
+                    style={{
+                      background: 'var(--blue)', border: 'none', borderRadius: 12,
+                      padding: '8px 16px', fontSize: 12, fontWeight: 700,
+                      color: '#fff', cursor: 'pointer', fontFamily: 'var(--font)',
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
             </div>
             <div style={{ textAlign: 'center', flexShrink: 0 }}>
               <p style={{ fontSize: 22, fontWeight: 800, color: waterPct >= 100 ? 'var(--green)' : 'var(--blue)', letterSpacing: '-0.5px', lineHeight: 1 }}>

@@ -19,6 +19,7 @@ const defaultProfile = {
   proteinGoal: 120,
   carbsGoal: 200,
   fatGoal: 60,
+  waterGoal: 2000,
   height: null,
   heightUnit: 'cm',
   currentWeight: null,

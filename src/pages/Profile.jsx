@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import {
   ChevronLeft, User, Target, Activity, Scale,
-  CheckCircle2, Edit3, Wand2,
+  CheckCircle2, Edit3, Wand2, Droplets,
 } from 'lucide-react'
 
 const ACTIVITY_LABELS = { low: 'Low', moderate: 'Moderate', high: 'High' }
@@ -57,9 +57,12 @@ export default function Profile() {
   const [proteinGoal, setProteinGoal] = useState(String(profile?.proteinGoal || ''))
   const [carbsGoal, setCarbsGoal] = useState(String(profile?.carbsGoal || ''))
   const [fatGoal, setFatGoal] = useState(String(profile?.fatGoal || ''))
+  const [waterGoal, setWaterGoal] = useState(String(profile?.waterGoal || '2000'))
   const [height, setHeight] = useState(String(profile?.height || ''))
+  const [heightUnit, setHeightUnit] = useState(profile?.heightUnit || 'cm')
   const [currentWeight, setCurrentWeight] = useState(String(profile?.currentWeight || ''))
   const [targetWeight, setTargetWeight] = useState(String(profile?.targetWeight || ''))
+  const [weightUnit, setWeightUnit] = useState(profile?.weightUnit || 'kg')
   const [age, setAge] = useState(String(profile?.age || ''))
   const [sex, setSex] = useState(profile?.sex || 'prefer_not_to_say')
   const [activityLevel, setActivityLevel] = useState(profile?.activityLevel || 'moderate')
@@ -91,6 +94,7 @@ export default function Profile() {
   const handleSave = () => {
     if (!name.trim()) { showToast('Name is required', 'error'); return }
     if (!calorieGoal || Number(calorieGoal) < 500) { showToast('Enter a valid calorie goal', 'error'); return }
+    if (waterGoal && Number(waterGoal) < 100) { showToast('Water goal must be at least 100 ml', 'error'); return }
 
     setProfile({
       ...profile,
@@ -99,9 +103,12 @@ export default function Profile() {
       proteinGoal: Number(proteinGoal) || 0,
       carbsGoal: Number(carbsGoal) || 0,
       fatGoal: Number(fatGoal) || 0,
+      waterGoal: Number(waterGoal) || 2000,
       height: Number(height) || null,
+      heightUnit,
       currentWeight: Number(currentWeight) || null,
       targetWeight: Number(targetWeight) || null,
+      weightUnit,
       age: Number(age) || null,
       sex,
       activityLevel,
@@ -311,6 +318,40 @@ export default function Profile() {
                 ))}
               </div>
             </div>
+            {/* Water goal */}
+            <div style={{ borderTop: '1px solid var(--sep)', padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <Droplets size={13} color="var(--blue)" />
+                <label className="input-label" style={{ color: 'var(--blue)' }}>Daily Water Goal (ml)</label>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  className="input"
+                  style={{ flex: 1, textAlign: 'center' }}
+                  type="number"
+                  value={waterGoal}
+                  onChange={e => setWaterGoal(e.target.value)}
+                  placeholder="2000"
+                />
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  {[1500, 2000, 2500, 3000].map(ml => (
+                    <button
+                      key={ml}
+                      onClick={() => setWaterGoal(String(ml))}
+                      style={{
+                        padding: '8px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700,
+                        border: waterGoal === String(ml) ? 'none' : '1.5px solid var(--border)',
+                        background: waterGoal === String(ml) ? 'var(--blue)' : 'var(--surface-3)',
+                        color: waterGoal === String(ml) ? '#fff' : 'var(--text-2)',
+                        cursor: 'pointer', fontFamily: 'var(--font)',
+                      }}
+                    >
+                      {ml >= 1000 ? `${ml / 1000}L` : `${ml}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -320,17 +361,39 @@ export default function Profile() {
           <div className="grouped-card">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid var(--sep)' }}>
               <div style={{ padding: '14px 16px', borderRight: '1px solid var(--sep)' }}>
-                <label className="input-label">Height (cm)</label>
-                <input className="input" style={{ marginTop: 6 }} type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="177" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label className="input-label">Height</label>
+                  <select
+                    className="input"
+                    style={{ padding: '3px 6px', fontSize: 11, width: 'auto' }}
+                    value={heightUnit}
+                    onChange={e => setHeightUnit(e.target.value)}
+                  >
+                    <option value="cm">cm</option>
+                    <option value="ft">ft/in</option>
+                  </select>
+                </div>
+                <input className="input" type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder={heightUnit === 'cm' ? '177' : '70'} />
               </div>
               <div style={{ padding: '14px 16px' }}>
-                <label className="input-label">Current Weight (kg)</label>
-                <input className="input" style={{ marginTop: 6 }} type="number" value={currentWeight} onChange={e => setCurrentWeight(e.target.value)} placeholder="84" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <label className="input-label">Weight</label>
+                  <select
+                    className="input"
+                    style={{ padding: '3px 6px', fontSize: 11, width: 'auto' }}
+                    value={weightUnit}
+                    onChange={e => setWeightUnit(e.target.value)}
+                  >
+                    <option value="kg">kg</option>
+                    <option value="lbs">lbs</option>
+                  </select>
+                </div>
+                <input className="input" type="number" value={currentWeight} onChange={e => setCurrentWeight(e.target.value)} placeholder={weightUnit === 'kg' ? '84' : '185'} />
               </div>
             </div>
             <div style={{ padding: '14px 16px' }}>
-              <label className="input-label">Target Weight (kg)</label>
-              <input className="input" style={{ marginTop: 6 }} type="number" value={targetWeight} onChange={e => setTargetWeight(e.target.value)} placeholder="75" />
+              <label className="input-label">Target Weight ({weightUnit})</label>
+              <input className="input" style={{ marginTop: 6 }} type="number" value={targetWeight} onChange={e => setTargetWeight(e.target.value)} placeholder={weightUnit === 'kg' ? '75' : '165'} />
             </div>
           </div>
         </div>
